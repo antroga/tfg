@@ -1,0 +1,68 @@
+---
+title: "Estudio de nodos"
+output: html_notebook
+---
+
+El grafo podado generado con anterioridad se estudia desde diferentes perspectivas.
+En est Notebook se analizaran distintas metricas para los nodos del grafo.
+
+Primero, cargamos las librerias necesarias.
+```{r}
+library(igraph)
+library(readxl)
+```
+
+A continuacion, cargamos el grafo.
+```{r}
+#Cargo datos
+aristas <- read_excel("./Dataset1.xlsx", 
+                    sheet = "WeigthedNetwork")
+nodos <- read_excel("./Dataset1.xlsx", 
+                    sheet = "NetworkNodes")
+#Construyo el grafo
+grafo_origen <- 
+  graph_from_data_frame(d = aristas, vertices = nodos,  directed=F)
+
+#Podo cogiendo como umbral 0.4
+grafo <- delete_edges(grafo_origen, E(grafo_origen)[PESO<0.4])
+```
+En primer lugar, calculo medidas relativas al grafo en su conjunto:
+- Densidad
+- Diámetro
+```{r}
+#Densidad
+edge_density(grafo, loops=F)
+
+#Diametro
+diameter(grafo, directed = F)
+```
+A continuación medidas que se calculan sobre cada nodo.
+
+- Degree (grado):
+```{r}
+deg <- degree(grafo, mode = "all")
+degdf <- data.frame(nodos, deg)
+degdf[order(-degdf$deg),]
+```
+
+- Centrality (centralidad por eigenvector) 
+```{r}
+cent_eing <- centr_eigen(grafo, directed = F, normalized = T)
+eigencen <- data.frame(nodos, cent_eing$vector)
+eigencen[order(-eigencen$cent_eing.vector),]
+
+```
+
+- Closeness (cercanía)
+```{r}
+cent_clo <-centr_clo(grafo, mode = "all", normalized = T)
+clossenes <- data.frame(nodos, cent_clo$res)
+clossenes[order(-clossenes$cent_clo.res),]
+```
+
+- Betweeness (vecindad)
+```{r}
+bet <- betweenness(grafo, directed = F)
+betdf <- data.frame(nodos, bet)
+betdf[order(-betdf$bet),]
+```

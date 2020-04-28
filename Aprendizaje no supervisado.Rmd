@@ -1,0 +1,128 @@
+---
+title: "Aprendizaje no supervisado"
+output: html_notebook
+---
+
+En este notebook se lleva a cabo un analisis no supervisado para dividir en clusteres o subgrafos la red de oncogenes que estamos estudiandos.
+La idea es comparar los datos obtenidos con el aprendizaje no supervisado y el descubrimiento de comunidades.
+Se aplican dos tipos de clustering: jerarquico y con kmeans.
+
+En primer lugar, cargamos las librerias necesarias.
+```{r}
+#install.packages("factoextra")
+library(igraph)
+library(readxl)
+library(factoextra)
+library(dplyr)
+```
+
+Se carga el grafo
+```{r}
+#Cargo datos
+aristas <- read_excel("./Dataset1.xlsx", 
+                    sheet = "WeigthedNetwork")
+nodos <- read_excel("./Dataset1.xlsx", 
+                    sheet = "NetworkNodes")
+#Construyo el grafo
+grafo_origen <- 
+  graph_from_data_frame(d = aristas, vertices = nodos,  directed=F)
+
+#Podo cogiendo como umbral 0.4
+grafo <- delete_edges(grafo_origen, E(grafo_origen)[PESO<0.4])
+```
+
+Generamos la matriz de adyacencia.
+```{r}
+matgraf <- get.adjacency(grafo, attr="PESO", sparse=F)
+```
+
+ALGORITMO K-MEANS
+
+En primer lugar, observamos el valor optimo de k.
+```{r}
+
+fnb<- fviz_nbclust(matgraf, kmeans, method = "silhouette")
+fnb
+```
+
+Aplicamos el clustering con kmeans para k=4.
+```{r}
+km_grafo <- kmeans(matgraf, centers = 4, nstart = 20)
+
+#visualización
+plot(matgraf, col= km_grafo$cluster, main="Cuatro clusters")
+```
+
+Se observan las caracteristicas del conjunto de datos.
+```{r}
+summary(km_grafo)
+```
+
+Estudiamos cada cluster por separado.
+```{r}
+km_clusteres <- km_grafo$cluster
+kmclust <- data.frame(nodos, km_clusteres)
+
+c1 <- filter(kmclust, kmclust$km_clusteres == 1)
+c1$NODOS
+c2 <- filter(kmclust, kmclust$km_clusteres == 2)
+c2$NODOS
+c3 <- filter(kmclust, kmclust$km_clusteres == 3)
+c3$NODOS
+c4 <- filter(kmclust, kmclust$km_clusteres == 4)
+c4$NODOS
+
+```
+
+CLUSTERING JERARQUICO
+
+Observamos el numero optimo de clusters.
+
+```{r}
+fnv<- fviz_nbclust(matgraf, hcut, method = "silhouette")
+fnv
+```
+
+Obtengo la matriz de distancias y el dendograma.
+
+```{r}
+
+#1- matriz de distancias con dist
+matriz_dist <- dist(matgraf)
+#2- hclust para construir dendograma
+hclust_aux <- hclust(matriz_dist, method = "average")
+plot(hclust_aux)
+```
+Corto el dendograma para k = 2
+```{r}
+#3- cortar el dendograma y obtener clusters con cutree
+grupos1 <- cutree(hclust_aux, k=2)
+
+#represento los resultados
+plot(matgraf, col=grupos1)
+```
+
+Se observan las características de los datos generados.
+```{r}
+summary(grupos1)
+```
+
+Se estudian los clusteres por separado.
+```{r}
+hjclust <- data.frame(nodos, grupos1) 
+
+c1 <- filter(hjclust, hjclust$grupos1 == 1)
+c2 <- filter(hjclust, hjclust$grupos1 == 2)
+c2$NODOS
+
+```
+
+Represento graficamente para poder comparar con los resultados obtenidos con descubrimiento de comunidades.
+```{r}
+set.seed(55)
+inicio<-sample(c(0:176), size = 177, replace = TRUE)
+clp <- cluster_label_prop(grafo, initial = inicio)
+plot(matgraf, col= clp$membership, main="Propagación de etiquetas")
+cfg <- cluster_fast_greedy(grafo)
+plot(matgraf, col= cfg$membership, main="Optimizacion de la modularidad")
+```
