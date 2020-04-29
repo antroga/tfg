@@ -62,7 +62,7 @@ miembros[order(-comunidad),]
 c2 <- filter(miembros, comunidad == 2)
 #c2$NODOS
 c1 <- filter(miembros, comunidad == 1)
-#c1$NODOS
+c1$NODOS
 ```
 
 Selecciono las comunidades con mayor numero de nodos (la 1 y la 2) y las estudio en relacion a las medidas de centralidad estudiadas anteriormente.
