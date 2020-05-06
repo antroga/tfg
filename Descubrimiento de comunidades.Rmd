@@ -3,7 +3,7 @@ title: "Descubrimiento de comunidades"
 output: html_notebook
 ---
 
-En el ambito del analisis de redes biologicas, el descubrimiento de comunidades permite agrupar los nodos aludiendo a funcionalidad comun o alto grado de relacion.
+En el ámbito del analisis de redes biologicas, el descubrimiento de comunidades permite agrupar los nodos aludiendo a funcionalidad comun o alto grado de relación.
 En este Notebook se realiza un proceso de descubrimiento de comunidades para la red de oncogenes objeto de estudio.
 
 
@@ -29,9 +29,9 @@ grafo_origen <-
 grafo <- delete_edges(grafo_origen, E(grafo_origen)[PESO<0.4])
 ```
 
-Deteccion de comunidades basada en propagacion de etiquetas.
+Detección de comunidades basada en propagación de etiquetas.
 
-Primero creo un vector con numeros aleatorios que sirve para inicializar el algoritmo (si no, en cada ejecucion dara resultados diferentes).
+Primero creo un vector con numeros aleatorios que sirve para inicializar el algoritmo (si no, en cada ejecución dará resultados diferentes).
 ```{r}
 set.seed(55)
 inicio<-sample(c(0:176), size = 177, replace = TRUE)
@@ -44,8 +44,8 @@ plot(clp, grafo)
 ```
 Observamos propiedades de las comunidades descubiertas.
 
-Las comunidades y el numero de nodos que tiene cada una.
-Aparecen 20 comunidades
+Las comunidades y el número de nodos que tiene cada una.
+Aparecen 20 comunidades:
 - 18 con un solo nodo
 - Comunidad 1: 42 nodos
 - Comunidad 2: 117 nodos
@@ -65,9 +65,9 @@ c1 <- filter(miembros, comunidad == 1)
 c1$NODOS
 ```
 
-Selecciono las comunidades con mayor numero de nodos (la 1 y la 2) y las estudio en relacion a las medidas de centralidad estudiadas anteriormente.
+Selecciono las comunidades con mayor numero de nodos (la 1 y la 2) y las estudio en relación a las medidas de centralidad calculadas anteriormente.
 
-- Grado
+- Degree (grado)
 ```{r}
 deg <- degree(grafo, mode = "all")
 degdf <- data.frame(nodos, deg)
@@ -78,7 +78,7 @@ c1[order(-c1$deg),]
 c2[order(-c2$deg),]
 ```
 
-- Centralidad
+- Centrality (centralidad)
 ```{r}
 cent_eing <- centr_eigen(grafo, directed = F, normalized = T)
 eigencen <- data.frame(nodos, cent_eing$vector)
@@ -89,7 +89,7 @@ c1[order(-c1$cent_eing.vector),]
 c2[order(-c2$cent_eing.vector),]
 ```
 
-- Cercania
+- Clossenes (cercanía)
 ```{r}
 cent_clo <-centr_clo(grafo, mode = "all", normalized = T)
 clossenes <- data.frame(nodos, cent_clo$res)
@@ -99,7 +99,7 @@ c2 <- filter(juntos, comunidad == 2)
 c1[order(-c1$cent_clo.res),]
 c2[order(-c2$cent_clo.res),]
 ```
-- Betweenness
+- Betweenness (intermediación)
 ```{r}
 bet <- betweenness(grafo, directed = F)
 betdf <- data.frame(nodos, bet)
@@ -112,15 +112,15 @@ c2[order(-c2$bet),]
 
 
 
-Deteccion de comunidades basadas en optimizacion de modularidad.
+Detección de comunidades basadas en optimización de modularidad.
 ```{r}
 cfg <- cluster_fast_greedy(grafo)
 plot(cfg, grafo)
 ```
 Observamos propiedades de las comunidades descubiertas.
 
-Las comunidades y el numero de nodos que tiene cada una.
-Aparecen 20 comunidades
+Las comunidades y el número de nodos que tiene cada una.
+Aparecen 20 comunidades:
 - 18 con un solo nodo
 - Comunidad 1: 87 nodos
 - Comunidad 2: 8 nodos
@@ -143,9 +143,9 @@ c1 <- filter(miembros, comunidad == 1)
 #c1$NODOS
 ```
 
-Selecciono las comunidades con mayor numero de nodos (la 1 y la 2) y las estudio en relacion a las medidas de centralidad estudiadas anteriormente.
+Selecciono las comunidades con mayor numero de nodos (la 1 y la 2) y las estudio en relación a las medidas de centralidad calculadas anteriormente.
 
-- Grado
+- Degree (grado)
 ```{r}
 deg <- degree(grafo, mode = "all")
 degdf <- data.frame(nodos, deg)
@@ -158,7 +158,7 @@ c2[order(-c2$deg),]
 c3[order(-c3$deg),]
 ```
 
-- Centralidad
+- Centrality (centralidad)
 ```{r}
 cent_eing <- centr_eigen(grafo, directed = F, normalized = T)
 eigencen <- data.frame(nodos, cent_eing$vector)
@@ -171,7 +171,7 @@ c2[order(-c2$cent_eing.vector),]
 c3[order(-c3$cent_eing.vector),]
 ```
 
-- Cercania
+- Clossenes (cercanía)
 ```{r}
 cent_clo <-centr_clo(grafo, mode = "all", normalized = T)
 clossenes <- data.frame(nodos, cent_clo$res)
@@ -184,7 +184,7 @@ c2[order(-c2$cent_clo.res),]
 c3[order(-c3$cent_clo.res),]
 ```
 
-- Betweenness
+- Betweenness (intermediación)
 ```{r}
 bet <- betweenness(grafo, directed = F)
 betdf <- data.frame(nodos, bet)

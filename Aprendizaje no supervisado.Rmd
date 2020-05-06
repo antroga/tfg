@@ -3,11 +3,11 @@ title: "Aprendizaje no supervisado"
 output: html_notebook
 ---
 
-En este notebook se lleva a cabo un analisis no supervisado para dividir en clusteres o subgrafos la red de oncogenes que estamos estudiandos.
+En este notebook se lleva a cabo un análisis no supervisado para dividir en clústeres o subgrafos la red de oncogenes que estamos estudiando.
 La idea es comparar los datos obtenidos con el aprendizaje no supervisado y el descubrimiento de comunidades.
-Se aplican dos tipos de clustering: jerarquico y con kmeans.
+Se aplican dos tipos de clustering: jerárquico y con kmeans.
 
-En primer lugar, cargamos las librerias necesarias.
+En primer lugar, cargamos las librerías necesarias.
 ```{r}
 #install.packages("factoextra")
 library(igraph)
@@ -38,7 +38,7 @@ matgraf <- get.adjacency(grafo, attr="PESO", sparse=F)
 
 ALGORITMO K-MEANS
 
-En primer lugar, observamos el valor optimo de k.
+En primer lugar, observamos el valor optimo de k que resulta ser k=4.
 ```{r}
 
 fnb<- fviz_nbclust(matgraf, kmeans, method = "silhouette")
@@ -53,7 +53,7 @@ km_grafo <- kmeans(matgraf, centers = 4, nstart = 20)
 plot(matgraf, col= km_grafo$cluster, main="k-means k=4")
 ```
 
-Se observan las caracteristicas del conjunto de datos.
+Se observan las características del conjunto de datos.
 ```{r}
 summary(km_grafo)
 ```
@@ -76,7 +76,7 @@ c4$NODOS
 
 CLUSTERING JERARQUICO
 
-Observamos el numero optimo de clusters.
+Observamos el numero óptimo de clusters.
 
 ```{r}
 fnv<- fviz_nbclust(matgraf, hcut, method = "silhouette")
@@ -117,7 +117,7 @@ c2$NODOS
 
 ```
 
-Represento graficamente para poder comparar con los resultados obtenidos con descubrimiento de comunidades.
+Represento graficamente las comunidades descubiertas en usando la forma de matriz de distancias para poder comparar los resultados.
 ```{r}
 set.seed(55)
 inicio<-sample(c(0:176), size = 177, replace = TRUE)

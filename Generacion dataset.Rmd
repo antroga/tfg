@@ -1,9 +1,9 @@
 ---
-title: "Generacion del dataset"
+title: "Generación del dataset"
 output: html_notebook
 ---
 
-En este Notebook se realiza la construccion de un dataset formado por el listado de nodos y el valor de las medidas de centralidad para ellos.  
+En este Notebook se realiza la construcción de un dataset formado por el listado de nodos y el valor de las medidas de centralidad para ellos.  
 
 En primer lugar se cargan las librerias necesarias
 ```{r}
@@ -65,7 +65,7 @@ El dataset esta formado por 177 filas y cinco columnas. La primera de ellas cont
 summary(grafodf)
 ```
 
-Observamos el dataframe graficamente.
+Observamos el dataframe gráficamente.
 ```{r}
 plot(grafodf[, -1])
 ```
@@ -76,14 +76,14 @@ hist(grafodf$Centrality)
 hist(grafodf$Closeness)
 hist(grafodf$Betweeness)
 ```
-- Degree: los datos estan balanceados. El rango de valores es (0, 80). Hay mayor incidencia en los valores inferiores a 10.
-- Centrality: los datos estan balanceados. El rango de balores es (0, 1). Se observa mayor incidencia en los valores inferiores a o.3.
+- Degree: los datos estan balanceados. El rango de valores es (0, 80). Hay mayor tasa de nodos en los valores inferiores a 10.
+- Centrality: los datos estan balanceados. El rango de balores es (0, 1). Se observa mayor cantidad de datos en los valores inferiores a o.3.
 - Closeness. Los datos se agrupan o bien en inferiores a o,01 o en superiores a 0.045. En medio no existen datos. El rango de valores es (0, 0.006)
 - Betweeness. La mayoría de ejemplos tienen un valor inferior a 50. El rango de valores es (0, 600).
 
 
 
-Generamos la matriz de correlacion
+Generamos la matriz de correlación
 ```{r}
 cormatrix <- cor(grafodf[,-1], method = "pearson")
 print(cormatrix)
@@ -105,8 +105,10 @@ Y con un mapa de calor:
 col<- colorRampPalette(c("blue", "white", "red"))(20)
 heatmap(x = cormatrix, col = col, symm = TRUE)
 ```
+De aquí podemos concluir que existe una mayor relación entre las medidas de "centrality" y "degree" y la menor correlación se da entre "degree" y "betweeness". 
 
-Este dataset sera usado para aprendizaje supervisado.
+
+Este dataset será usado para aprendizaje supervisado.
 Por ello, debe contener un campo que funcione como etiqueta cuyo valor intentaremos predecir.
 Este campo será ...
 ```{r}

@@ -5,7 +5,7 @@ output: html_notebook
 
 Se construye una red de oncogenes a partir del material proporcionado en el artículo en forma de archivo excel.
 
-En primer lugar cargamos (instalamos previamente) las librerias necesarias. 
+En primer lugar cargamos (instalamos previamente) las librerías necesarias. 
 ```{r}
 #install.packages("igraph")
 #install.packages("readxl")
@@ -35,7 +35,7 @@ head(grafo)
 plot(grafo)
 ```
 
-Vemos algunos datos caracteristicos del grafo como:
+Vemos algunos datos característicos del grafo como:
 - Histograma que representa los pesos de las aristas
   Puede apreciarse que la mayoría de las aristas tienen un peso dentro del rango (0, 0.4)
 - Media del peso de las aristas: 0.2444883
@@ -46,28 +46,27 @@ mean(aristas$PESO)
 sd(aristas$PESO)
 ```
 
-Probamos varias representaciones graficas para el grafo para intentar verlo con más claridad. 
-Circulo
+Probamos varias representaciones gráficas del grafo para intentar verlo con más claridad:
+
+- Círculo
 ```{r}
 l <- layout_in_circle(grafo)
 plot(grafo, layout=l)
 
 ```
-Esfera
+- Esfera
 ```{r}
 e <- layout_on_sphere(grafo)
 plot(grafo, layout=e)
 ```
-Fruchterman-Reingold
+- Fruchterman-Reingold
 ```{r}
-
-#Fruchterman-Reingold
 fr <- layout_with_fr(grafo)
 plot(grafo, layout=fr)
 ```
-Las visualización del grafo es poco clara.
+Las visualización del grafo es poco clara debido a la gran cantidad de aristas.
 
-A continuación lo representamos como mapa de calor a partir de la matriz de adyacencia.
+A continuación, lo representamos como mapa de calor a partir de la matriz de adyacencia.
 ```{r}
 #matriz
 netm <- get.adjacency(grafo, attr="PESO", sparse=F)
@@ -111,7 +110,7 @@ g4 <- delete_edges(grafo, E(grafo)[PESO<0.4])
 Tomamos un contacto inicial con este nuevo grafo.
 Tiene el mismo numero de vertices que el grafo de partida, 177.
 Sin embargo, el numero de aristas se ha reducido hasta 3007 (un 19% de las aristas del grafo de partida).
-Viendo la representacion grafica observamos una mayor claridad. 
+Viendo la representacion gráfica observamos una mayor claridad. 
 ```{r}
 V(g4)
 E(g4)
