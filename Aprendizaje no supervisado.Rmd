@@ -50,7 +50,7 @@ Aplicamos el clustering con kmeans para k=4.
 km_grafo <- kmeans(matgraf, centers = 4, nstart = 20)
 
 #visualización
-plot(matgraf, col= km_grafo$cluster, main="Cuatro clusters")
+plot(matgraf, col= km_grafo$cluster, main="k-means k=4")
 ```
 
 Se observan las caracteristicas del conjunto de datos.
@@ -99,7 +99,7 @@ Corto el dendograma para k = 2
 grupos1 <- cutree(hclust_aux, k=2)
 
 #represento los resultados
-plot(matgraf, col=grupos1)
+plot(matgraf, col=grupos1, main = "Clustering jerárquico k=2")
 ```
 
 Se observan las características de los datos generados.
@@ -122,7 +122,7 @@ Represento graficamente para poder comparar con los resultados obtenidos con des
 set.seed(55)
 inicio<-sample(c(0:176), size = 177, replace = TRUE)
 clp <- cluster_label_prop(grafo, initial = inicio)
-plot(matgraf, col= clp$membership, main="Propagación de etiquetas")
+plot(matgraf, col= clp$membership, main="Propagación de etiquetas, k=2")
 cfg <- cluster_fast_greedy(grafo)
-plot(matgraf, col= cfg$membership, main="Optimizacion de la modularidad")
+plot(matgraf, col= cfg$membership, main="Optimizacion de la modularidad, k=3")
 ```
