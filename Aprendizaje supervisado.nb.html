@@ -1749,21 +1749,115 @@ summary {
 
 
 <!-- rnb-text-begin -->
-<p>This is an <a href="http://rmarkdown.rstudio.com">R Markdown</a> Notebook. When you execute code within the notebook, the results appear beneath the code.</p>
-<p>Try executing this chunk by clicking the <em>Run</em> button within the chunk or by placing your cursor inside it and pressing <em>Ctrl+Shift+Enter</em>.</p>
+<p>En este apartado se lleva a cabo</p>
+<p>En primer lugar se cargan las librerias necesarias</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxucGxvdChjYXJzKVxuYGBgIn0= -->
-<pre class="r"><code>plot(cars)</code></pre>
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeShpZ3JhcGgpXG5gYGAifQ== -->
+<pre class="r"><code>library(igraph)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoicGFja2FnZSDjpLzjuLFpZ3JhcGjjpLzjuLIgd2FzIGJ1aWx0IHVuZGVyIFIgdmVyc2lvbiAzLjUuM1xuQXR0YWNoaW5nIHBhY2thZ2U6IOOkvOO4sWlncmFwaOOkvOO4slxuXG5UaGUgZm9sbG93aW5nIG9iamVjdHMgYXJlIG1hc2tlZCBmcm9tIOOkvOO4sXBhY2thZ2U6c3RhdHPjpLzjuLI6XG5cbiAgICBkZWNvbXBvc2UsIHNwZWN0cnVtXG5cblRoZSBmb2xsb3dpbmcgb2JqZWN0IGlzIG1hc2tlZCBmcm9tIOOkvOO4sXBhY2thZ2U6YmFzZeOkvOO4sjpcblxuICAgIHVuaW9uXG4ifQ== -->
+<pre><code>package 㤼㸱igraph㤼㸲 was built under R version 3.5.3
+Attaching package: 㤼㸱igraph㤼㸲
+
+The following objects are masked from 㤼㸱package:stats㤼㸲:
+
+    decompose, spectrum
+
+The following object is masked from 㤼㸱package:base㤼㸲:
+
+    union</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeShyZWFkeGwpXG5gYGAifQ== -->
+<pre class="r"><code>library(readxl)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoicGFja2FnZSDjpLzjuLFyZWFkeGzjpLzjuLIgd2FzIGJ1aWx0IHVuZGVyIFIgdmVyc2lvbiAzLjUuM1xuIn0= -->
+<pre><code>package 㤼㸱readxl㤼㸲 was built under R version 3.5.3</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<p>Cargamos los datos</p>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuXG5nZW5lcyA8LSByZWFkLmRlbGltKCdjYW5jZXJnZW5lc19saXN0LnR4dCcsIGhlYWRlciA9IFRSVUUsIHNlcCA9IFwiXFx0XCIpXG5cbm5vZG9zIDwtIG5vZG9zIDwtIHJlYWRfZXhjZWwoXCIuL0RhdGFzZXQxLnhsc3hcIiwgXG4gICAgICAgICAgICAgICAgICAgIHNoZWV0ID0gXCJOZXR3b3JrTm9kZXNcIilcbmBgYCJ9 -->
+<pre class="r"><code>
+genes &lt;- read.delim(&#39;cancergenes_list.txt&#39;, header = TRUE, sep = &quot;\t&quot;)
+
+nodos &lt;- nodos &lt;- read_excel(&quot;./Dataset1.xlsx&quot;, 
+                    sheet = &quot;NetworkNodes&quot;)</code></pre>
 <!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
-<p>Add a new chunk by clicking the <em>Insert Chunk</em> button on the toolbar or by pressing <em>Ctrl+Alt+I</em>.</p>
-<p>When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the <em>Preview</em> button or press <em>Ctrl+Shift+K</em> to preview the HTML file).</p>
-<p>The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike <em>Knit</em>, <em>Preview</em> does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.</p>
+<p>Cambiamos los nombres de las columnas</p>
 <!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<p>Comparamos la lista de oncogenes de TCGA con los nodos del grafo.</p>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuY29sbmFtZXMoZ2VuZXMpIDwtIGMoXCJOT0RPU1wiLCBcImNhbmRpZGF0b3NcIilcbmVuX2NvbXVuIDwtIG1lcmdlKG5vZG9zLCBnZW5lcylcbmtub3duIDwtIGVuX2NvbXVuJE5PRE9TXG5gYGAifQ== -->
+<pre class="r"><code>colnames(genes) &lt;- c(&quot;NODOS&quot;, &quot;candidatos&quot;)
+en_comun &lt;- merge(nodos, genes)
+known &lt;- en_comun$NODOS</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<p>Comparamos la lista de genes candidatos a ser oncogenes de TCGA con los nodos del grafo.</p>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuY29sbmFtZXMoZ2VuZXMpIDwtIGMoXCJPbmNvZ2VuZXNcIiwgXCJOT0RPU1wiKVxuZW5fY29tdW4gPC0gbWVyZ2Uobm9kb3MsIGdlbmVzKVxuY2FuZGlkYXRlIDwtIGVuX2NvbXVuJE5PRE9TXG5gYGAifQ== -->
+<pre class="r"><code>colnames(genes) &lt;- c(&quot;Oncogenes&quot;, &quot;NODOS&quot;)
+en_comun &lt;- merge(nodos, genes)
+candidate &lt;- en_comun$NODOS</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<p>Los unifico tods en una lista</p>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlzdGEgPC0gYyhrbm93biwgY2FuZGlkYXRlKVxubm9kbyA8LSBjKG5vZG9zKVxubm9kbyROT0RPU1sxMl1cbmBgYCJ9 -->
+<pre class="r"><code>lista &lt;- c(known, candidate)
+nodo &lt;- c(nodos)
+nodo$NODOS[12]</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiWzFdIFwiQ0FWMVwiXG4ifQ== -->
+<pre><code>[1] &quot;CAV1&quot;</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubm9kb3MkTk9ET1NbMTEyXVxuYGBgIn0= -->
+<pre class="r"><code>nodos$NODOS[112]</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiWzFdIFwiR0FMTlQzXCJcbiJ9 -->
+<pre><code>[1] &quot;GALNT3&quot;</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<p>Unifico con los nodos para crear una lista de 1 y 0 donde solo tenga un 1 los que pertenezcan a esta lista.</p>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubCA8LSBjKDApXG5pbmRpY2VzID0gc2VxKDEgLCAxNzcsIGJ5PTEpXG5mb3IoaSBpbiBpbmRpY2VzKXtcbiAgbiA8LSAwXG4gIGZvcih5IGluIGxpc3RhKXtcbiAgICBpZihub2RvcyROT0RPU1tpXSA9PSB5KVxuICAgICAgbiA8LSAxXG4gIH1cbiAgbFtpXSA8LSBuXG59XG5sXG5gYGAifQ== -->
+<pre class="r"><code>l &lt;- c(0)
+indices = seq(1 , 177, by=1)
+for(i in indices){
+  n &lt;- 0
+  for(y in lista){
+    if(nodos$NODOS[i] == y)
+      n &lt;- 1
+  }
+  l[i] &lt;- n
+}
+l</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiICBbMV0gMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAxIDAgMSAwIDAgMFxuIFs0NF0gMCAwIDAgMCAxIDAgMCAwIDAgMCAwIDEgMCAwIDAgMCAwIDAgMSAxIDAgMCAwIDAgMCAwIDAgMCAxIDAgMCAwIDAgMCAwIDAgMCAxIDAgMSAwIDAgMFxuIFs4N10gMSAxIDAgMCAwIDAgMCAxIDAgMCAwIDAgMCAwIDAgMCAwIDAgMSAxIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDEgMCAwIDAgMCAwIDAgMFxuWzEzMF0gMCAxIDAgMCAwIDAgMCAwIDAgMSAwIDAgMCAwIDAgMCAwIDEgMCAwIDAgMCAwIDAgMSAwIDAgMCAwIDAgMSAwIDEgMCAwIDAgMCAwIDAgMCAwIDAgMFxuWzE3M10gMCAwIDAgMCAwXG4ifQ== -->
+<pre><code>  [1] 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 1 0 0 0
+ [44] 0 0 0 0 1 0 0 0 0 0 0 1 0 0 0 0 0 0 1 1 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 1 0 1 0 0 0
+ [87] 1 1 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0
+[130] 0 1 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 1 0 0 0 0 0 0 1 0 0 0 0 0 1 0 1 0 0 0 0 0 0 0 0 0 0
+[173] 0 0 0 0 0</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-chunk-end -->
 
-<div id="rmd-source-code">LS0tDQp0aXRsZTogIkFwcmVuZGl6YWplIHN1cGVydmlzYWRvIg0Kb3V0cHV0OiBodG1sX25vdGVib29rDQotLS0NCg0KVGhpcyBpcyBhbiBbUiBNYXJrZG93bl0oaHR0cDovL3JtYXJrZG93bi5yc3R1ZGlvLmNvbSkgTm90ZWJvb2suIFdoZW4geW91IGV4ZWN1dGUgY29kZSB3aXRoaW4gdGhlIG5vdGVib29rLCB0aGUgcmVzdWx0cyBhcHBlYXIgYmVuZWF0aCB0aGUgY29kZS4gDQoNClRyeSBleGVjdXRpbmcgdGhpcyBjaHVuayBieSBjbGlja2luZyB0aGUgKlJ1biogYnV0dG9uIHdpdGhpbiB0aGUgY2h1bmsgb3IgYnkgcGxhY2luZyB5b3VyIGN1cnNvciBpbnNpZGUgaXQgYW5kIHByZXNzaW5nICpDdHJsK1NoaWZ0K0VudGVyKi4gDQoNCmBgYHtyfQ0KcGxvdChjYXJzKQ0KYGBgDQoNCkFkZCBhIG5ldyBjaHVuayBieSBjbGlja2luZyB0aGUgKkluc2VydCBDaHVuayogYnV0dG9uIG9uIHRoZSB0b29sYmFyIG9yIGJ5IHByZXNzaW5nICpDdHJsK0FsdCtJKi4NCg0KV2hlbiB5b3Ugc2F2ZSB0aGUgbm90ZWJvb2ssIGFuIEhUTUwgZmlsZSBjb250YWluaW5nIHRoZSBjb2RlIGFuZCBvdXRwdXQgd2lsbCBiZSBzYXZlZCBhbG9uZ3NpZGUgaXQgKGNsaWNrIHRoZSAqUHJldmlldyogYnV0dG9uIG9yIHByZXNzICpDdHJsK1NoaWZ0K0sqIHRvIHByZXZpZXcgdGhlIEhUTUwgZmlsZSkuDQoNClRoZSBwcmV2aWV3IHNob3dzIHlvdSBhIHJlbmRlcmVkIEhUTUwgY29weSBvZiB0aGUgY29udGVudHMgb2YgdGhlIGVkaXRvci4gQ29uc2VxdWVudGx5LCB1bmxpa2UgKktuaXQqLCAqUHJldmlldyogZG9lcyBub3QgcnVuIGFueSBSIGNvZGUgY2h1bmtzLiBJbnN0ZWFkLCB0aGUgb3V0cHV0IG9mIHRoZSBjaHVuayB3aGVuIGl0IHdhcyBsYXN0IHJ1biBpbiB0aGUgZWRpdG9yIGlzIGRpc3BsYXllZC4NCg==</div>
+<div id="rmd-source-code">LS0tDQp0aXRsZTogIkFwcmVuZGl6YWplIHN1cGVydmlzYWRvIg0Kb3V0cHV0OiBodG1sX25vdGVib29rDQotLS0NCg0KRW4gZXN0ZSBhcGFydGFkbyBzZSBsbGV2YSBhIGNhYm8gIA0KDQpFbiBwcmltZXIgbHVnYXIgc2UgY2FyZ2FuIGxhcyBsaWJyZXJpYXMgbmVjZXNhcmlhcw0KYGBge3J9DQpsaWJyYXJ5KGlncmFwaCkNCmxpYnJhcnkocmVhZHhsKQ0KYGBgDQoNCkNhcmdhbW9zIGxvcyBkYXRvcw0KYGBge3J9DQoNCmdlbmVzIDwtIHJlYWQuZGVsaW0oJ2NhbmNlcmdlbmVzX2xpc3QudHh0JywgaGVhZGVyID0gVFJVRSwgc2VwID0gIlx0IikNCg0Kbm9kb3MgPC0gbm9kb3MgPC0gcmVhZF9leGNlbCgiLi9EYXRhc2V0MS54bHN4IiwgDQogICAgICAgICAgICAgICAgICAgIHNoZWV0ID0gIk5ldHdvcmtOb2RlcyIpDQpgYGANCkNhbWJpYW1vcyBsb3Mgbm9tYnJlcyBkZSBsYXMgY29sdW1uYXMNCmBgYHtyfQ0KDQpgYGANCg0KQ29tcGFyYW1vcyBsYSBsaXN0YSBkZSBvbmNvZ2VuZXMgZGUgVENHQSBjb24gbG9zIG5vZG9zIGRlbCBncmFmby4gDQpgYGB7cn0NCmNvbG5hbWVzKGdlbmVzKSA8LSBjKCJOT0RPUyIsICJjYW5kaWRhdG9zIikNCmVuX2NvbXVuIDwtIG1lcmdlKG5vZG9zLCBnZW5lcykNCmtub3duIDwtIGVuX2NvbXVuJE5PRE9TDQpgYGANCkNvbXBhcmFtb3MgbGEgbGlzdGEgZGUgZ2VuZXMgY2FuZGlkYXRvcyBhIHNlciBvbmNvZ2VuZXMgZGUgVENHQSBjb24gbG9zIG5vZG9zIGRlbCBncmFmby4NCmBgYHtyfQ0KY29sbmFtZXMoZ2VuZXMpIDwtIGMoIk9uY29nZW5lcyIsICJOT0RPUyIpDQplbl9jb211biA8LSBtZXJnZShub2RvcywgZ2VuZXMpDQpjYW5kaWRhdGUgPC0gZW5fY29tdW4kTk9ET1MNCmBgYA0KTG9zIHVuaWZpY28gdG9kcyBlbiB1bmEgbGlzdGENCmBgYHtyfQ0KbGlzdGEgPC0gYyhrbm93biwgY2FuZGlkYXRlKQ0KYGBgDQpVbmlmaWNvIGNvbiBsb3Mgbm9kb3MgcGFyYSBjcmVhciB1bmEgbGlzdGEgZGUgMSB5IDAgZG9uZGUgc29sbyB0ZW5nYSB1biAxIGxvcyBxdWUgcGVydGVuZXpjYW4gYSBlc3RhIGxpc3RhLiANCmBgYHtyfQ0KbCA8LSBjKDApDQppbmRpY2VzID0gc2VxKDEgLCAxNzcsIGJ5PTEpDQpmb3IoaSBpbiBpbmRpY2VzKXsNCiAgbiA8LSAwDQogIGZvcih5IGluIGxpc3RhKXsNCiAgICBpZihub2RvcyROT0RPU1tpXSA9PSB5KQ0KICAgICAgbiA8LSAxDQogIH0NCiAgbFtpXSA8LSBuDQp9DQpsDQpgYGANCg==</div>
 
 
 

@@ -3,16 +3,54 @@ title: "Aprendizaje supervisado"
 output: html_notebook
 ---
 
-This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+En este apartado se lleva a cabo  
 
-Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
-
+En primer lugar se cargan las librerias necesarias
 ```{r}
-plot(cars)
+library(igraph)
+library(readxl)
 ```
 
-Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+Cargamos los datos
+```{r}
 
-When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+genes <- read.delim('cancergenes_list.txt', header = TRUE, sep = "\t")
 
-The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+nodos <- nodos <- read_excel("./Dataset1.xlsx", 
+                    sheet = "NetworkNodes")
+```
+Cambiamos los nombres de las columnas
+```{r}
+
+```
+
+Comparamos la lista de oncogenes de TCGA con los nodos del grafo. 
+```{r}
+colnames(genes) <- c("NODOS", "candidatos")
+en_comun <- merge(nodos, genes)
+known <- en_comun$NODOS
+```
+Comparamos la lista de genes candidatos a ser oncogenes de TCGA con los nodos del grafo.
+```{r}
+colnames(genes) <- c("Oncogenes", "NODOS")
+en_comun <- merge(nodos, genes)
+candidate <- en_comun$NODOS
+```
+Los unifico tods en una lista
+```{r}
+lista <- c(known, candidate)
+```
+Unifico con los nodos para crear una lista de 1 y 0 donde solo tenga un 1 los que pertenezcan a esta lista. 
+```{r}
+l <- c(0)
+indices = seq(1 , 177, by=1)
+for(i in indices){
+  n <- 0
+  for(y in lista){
+    if(nodos$NODOS[i] == y)
+      n <- 1
+  }
+  l[i] <- n
+}
+l
+```

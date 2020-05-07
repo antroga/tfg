@@ -1,0 +1,65 @@
+---
+title: "Generación del dataset"
+output: html_notebook
+---
+
+En este Notebook se realiza la construcción de un dataset formado por el listado de nodos y el valor de las medidas de centralidad para ellos.  
+
+En primer lugar se cargan las librerias necesarias
+```{r}
+library(igraph)
+library(readxl)
+```
+
+Cargamos los datos del grafo.
+```{r}
+#Cargo datos
+aristas <- read_excel("./Dataset1.xlsx", 
+                    sheet = "WeigthedNetwork")
+nodos <- read_excel("./Dataset1.xlsx", 
+                    sheet = "NetworkNodes")
+#Construyo el grafo
+grafo_origen <- 
+  graph_from_data_frame(d = aristas, vertices = nodos,  directed=F)
+
+#Podo cogiendo como umbral 0.4
+grafo <- delete_edges(grafo_origen, E(grafo_origen)[PESO<0.4])
+```
+
+Calculo los vectores con las medidas que quiero que tenga el dataframe (degree, centrality, closseness, betweenness).
+```{r}
+#Degree
+deg <- degree(grafo, mode = "all")
+
+#Closeness
+close <- closeness(grafo, mode= "all", normalized = T)
+
+#Centrality
+eig_cent <- eigen_centrality(grafo, directed = F)
+
+#Betweenness
+bet <- betweenness(grafo, directed = F)
+
+```
+Genero el dataset creando un dataframe con los vectores obtenidos anteriormente.
+```{r}
+grafodf <- data.frame(
+  "Nodos" = nodos,
+  "Degree" = deg,
+  "Centrality" = eig_cent$vector,
+  "Closeness" = close, 
+  "Betweeness" = bet
+)
+```
+
+Este dataset será usado para aprendizaje supervisado.
+Por ello, debe contener un campo que funcione como etiqueta cuyo valor intentaremos predecir.
+Este campo será ...
+```{r}
+
+```
+
+Finalmente el dataframe se guarda como archivo de texto para poder ser importado.
+```{r}
+write.csv(grafodf, file="dataframe.txt")
+```
