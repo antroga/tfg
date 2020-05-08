@@ -41,6 +41,66 @@ eig_cent <- eigen_centrality(grafo, directed = F)
 bet <- betweenness(grafo, directed = F)
 
 ```
+
+Este dataset será usado para aprendizaje supervisado.
+Por ello, debe contener un campo que funcione como etiqueta cuyo valor intentaremos predecir.
+Este campo podrá ser:
+
+- Ser o no nodo aislado, en referencia a los datos obtenidos con el descubrimiento de comunidades.
+
+Para ello, primero leo el listado de nodos con las comunidades a las que pertenecen.
+```{r}
+df <- read.table("./comunidades.txt", header = TRUE, sep = ",")
+```
+En este listado, los nodos aislados son los que pertenecen a comunidades distintas a la 1, 2 y 3. 
+```{r}
+l1 <- c(0)
+indices = seq(1 , 177, by=1)
+for(i in indices){
+  n <- 0
+  if(df$comunidad[i] > 3){
+    n <- 1
+  }
+  l1[i] <- n
+}
+l1
+```
+
+- Información de conocimiento experto --> red de TCGA:
+
+Para ello, cargamos el listado de genes
+```{r}
+genes <- read.delim('cancergenes_list.txt', header = TRUE, sep = "\t")
+```
+Comparamos la lista de oncogenes de TCGA con los nodos del grafo. 
+```{r}
+colnames(genes) <- c("NODOS", "candidatos")
+en_comun <- merge(nodos, genes)
+known <- en_comun$NODOS
+```
+Comparamos la lista de genes candidatos a ser oncogenes de TCGA con los nodos del grafo.
+```{r}
+colnames(genes) <- c("Oncogenes", "NODOS")
+en_comun <- merge(nodos, genes)
+candidate <- en_comun$NODOS
+```
+Los unifico todos en una lista
+```{r}
+lista <- c(known, candidate)
+```
+Unifico con los nodos para crear una lista de 1 y 0 donde solo tenga un 1 los que pertenezcan a esta lista. 
+```{r}
+l2 <- c(0)
+indices = seq(1 , 177, by=1)
+for(i in indices){
+  n <- 0
+  for(y in lista){
+    if(nodos$NODOS[i] == y)
+      n <- 1
+  }
+  l2[i] <- n
+}
+```
 Genero el dataset creando un dataframe con los vectores obtenidos anteriormente.
 ```{r}
 grafodf <- data.frame(
@@ -48,18 +108,13 @@ grafodf <- data.frame(
   "Degree" = deg,
   "Centrality" = eig_cent$vector,
   "Closeness" = close, 
-  "Betweeness" = bet
+  "Betweeness" = bet,
+  "Nodo aislado" = l1,
+  "Estar TCGA" = l2
 )
 ```
 
-Este dataset será usado para aprendizaje supervisado.
-Por ello, debe contener un campo que funcione como etiqueta cuyo valor intentaremos predecir.
-Este campo será ...
-```{r}
-
-```
-
-Finalmente el dataframe se guarda como archivo de texto para poder ser importado.
+Finalmente el dataframe se guarda como archivo de texto para poder ser importado posteriormente. 
 ```{r}
 write.csv(grafodf, file="dataframe.txt")
 ```

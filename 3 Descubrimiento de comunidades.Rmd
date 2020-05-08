@@ -141,6 +141,11 @@ c2 <- filter(miembros, comunidad == 2)
 #c2$NODOS
 c1 <- filter(miembros, comunidad == 1)
 #c1$NODOS
+
+```
+Guardo el listado de miembros en un archivo txt que será usado posteriormente.
+```{r}
+write.csv(miembros, file="comunidades.txt")
 ```
 
 Selecciono las comunidades con mayor numero de nodos (la 1 y la 2) y las estudio en relación a las medidas de centralidad calculadas anteriormente.

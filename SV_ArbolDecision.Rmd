@@ -1,0 +1,21 @@
+---
+title: "Aprendizaje supervisado: Árbol de decisión"
+output: html_notebook
+---
+
+En este apartado se lleva a cabo un estudio de tipo supervisado con el algoritmo de árbol de decisión XXX
+
+En primer lugar se instalan los paquetes y se cargan las librerías necesarias.
+```{r}
+#install.packages("rpart")
+library(rpart)
+```
+Cargo el dataframe
+```{r}
+grafodf <- read.table("./dataframe.txt", header = TRUE, sep = ",")
+print(grafodf)
+```
+Cambio los nombres de las columnas para facilitar la aplicación de los algoritmos.
+```{r}
+colnames(grafodf) <- c("x", "NODOS", "X1","X2", "X3", "X4", "Y1", "Y2" )
+```

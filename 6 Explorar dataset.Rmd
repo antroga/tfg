@@ -13,9 +13,10 @@ library(igraph)
 library(readxl)
 library(corrplot)
 ```
-Cargo el dataframe
+Cargo el dataframe y me quedo con las métricas para estudiar la relación que tienen entre sí.
 ```{r}
-grafodf <- read.table("./dataframe.txt", header = TRUE, sep = ",")
+df <- read.table("./dataframe.txt", header = TRUE, sep = ",")
+grafodf <- df[, 1:5 ]
 ```
 
 Inspeccionamos el dataset generado.

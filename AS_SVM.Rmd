@@ -1,0 +1,106 @@
+---
+title: "Aprendizaje supervisado: SVM"
+output: html_notebook
+---
+
+En este apartado se lleva a cabo un estudio de tipo supervisado con el algoritmo SVM (Support Vector Machines) 
+
+En primer lugar se instalan los paquetes y se cargan las librerías necesarias.
+```{r}
+#install.packages("e1071")
+library(dplyr)
+library(igraph)
+library(readxl)
+library(e1071)
+```
+
+Cargo el dataframe
+```{r}
+grafodf <- read.table("./dataframe.txt", header = TRUE, sep = ",")
+print(grafodf)
+```
+Cambio los nombres de las columnas para facilitar la aplicación de los algoritmos.
+```{r}
+colnames(grafodf) <- c("x", "NODOS", "X1","X2", "X3", "X4", "Y1", "Y2" )
+```
+Estandarizo los valores, ya que de lo contrario los predictores de mayor magnitud eclipsarían a los de menor magnitud.
+```{r}
+grafodf$X1 <- scale(grafodataframe$X1)
+grafodf$X2 <- scale(grafodataframe$X2)
+grafodf$X3 <- scale(grafodataframe$X3)
+grafodf$X4 <- scale(grafodataframe$X4)
+grafodf
+```
+
+Divido el conjunto de datos en test y train.
+```{r}
+set.seed(101)  
+sample <- sample.int(n = nrow(grafodf), size = floor(.75*nrow(grafodf)), replace = F)
+train <- grafodf[sample, ]
+test  <- grafodf[-sample, ]
+
+```
+Para aplicar el algoritmo, es necesario que las variables de respuesta sean factores.
+```{r}
+train$Y1 <- as.factor(train$Y1)
+train$Y2 <- as.factor(train$Y2)
+test$Y1 <- as.factor(test$Y1)
+test$Y2 <- as.factor(test$Y2)
+grafodf$Y1 <- as.factor(grafodf$Y1)
+grafodf$Y2 <- as.factor(grafodf$Y2)
+```
+Construimos el modelo.
+La semilla asegura la reproducibilidad de los cálculos.
+```{r}
+set.seed(10111)
+modelo_svm1 <- svm(formula = Y1 ~ X1 + X2 + X3 + X4, data = train, kernel = "linear",
+                  cost = 10, scale = FALSE)
+modelo_svm2 <- svm(formula = Y2 ~ X1 + X2 + X3 + X4, data = train, kernel = "linear",
+                  cost = 10, scale = FALSE)
+```
+Vemos las características del modelo. 
+Hay un total de dos vectores, cada uno perteneciente a una clase.
+```{r}
+summary(modelo_svm1)
+summary(modelo_svm2)
+```
+Índice de las observaciones que actúan como vector soporte
+```{r}
+modelo_svm1$index
+modelo_svm2$index
+```
+Visualizamos los resultados para la predicción de la primera etiqueta (ser nodo aislado)
+```{r}
+# Predicciones
+predicciones <- predict(object = modelo_svm1, test)
+paste("Error de test:", 100*mean(test$Y1 != predicciones),"%")
+```
+Visualizamos los resultados para la predicción de la primera etiqueta (ser nodo aislado)
+```{r}
+# Predicciones
+predicciones <- predict(object = modelo_svm2, test)
+paste("Error de test:", 100*mean(test$Y1 != predicciones),"%")
+```
+La función tune permite optimizar los hiperparámetros del modelo SVM.
+Para la etiqueta 1:
+```{r}
+svm_cv1 <- tune("svm", Y1 ~ X1 + X2 + X3 + X4, data = grafodf[, 2:7],
+               kernel = 'linear',
+               ranges = list(cost = c(0.001, 0.01, 0.1, 1, 5, 10, 20, 50, 100,
+                                      150, 200)))
+
+summary(svm_cv1)
+```
+Para la etiqueta 2:
+```{r}
+df2 <- select(grafodf, 3,4,5,6,8) 
+svm_cv2 <- tune("svm", Y2 ~ X1 + X2 + X3 + X4, data = df2,
+               kernel = 'linear',
+               ranges = list(cost = c(0.001, 0.01, 0.1, 1, 5, 10, 20, 50, 100,
+                                      150, 200)))
+
+summary(svm_cv2)
+```
+No tiene sentido la clasificación.
+Tenemos muy pocos datos para usar este trataiento.
+Probamos con cross validation. 
