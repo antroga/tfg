@@ -101,6 +101,7 @@ for(i in indices){
   l2[i] <- n
 }
 ```
+
 Genero el dataset creando un dataframe con los vectores obtenidos anteriormente.
 ```{r}
 grafodf <- data.frame(

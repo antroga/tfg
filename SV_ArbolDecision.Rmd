@@ -8,7 +8,10 @@ En este apartado se lleva a cabo un estudio de tipo supervisado con el algoritmo
 En primer lugar se instalan los paquetes y se cargan las librerías necesarias.
 ```{r}
 #install.packages("rpart")
+#install.packages("rpart.plot")
 library(rpart)
+library(rpart.plot)
+library(dplyr)
 ```
 Cargo el dataframe
 ```{r}
@@ -18,4 +21,49 @@ print(grafodf)
 Cambio los nombres de las columnas para facilitar la aplicación de los algoritmos.
 ```{r}
 colnames(grafodf) <- c("x", "NODOS", "X1","X2", "X3", "X4", "Y1", "Y2" )
+```
+
+Divido el conjunto de datos en test y train.
+```{r}
+set.seed(101)  
+sample <- sample.int(n = nrow(grafodf), size = floor(.75*nrow(grafodf)), replace = F)
+train <- grafodf[sample, ]
+test  <- grafodf[-sample, ]
+```
+Creamos dos conjuntos, uno para cada etiqueta.
+(dim, class, de los conjuntos de test y train)
+```{r}
+trainY1 <- train[, 2:7]
+testY1 <- test[, 2:7]
+df1 <- grafodf[, 2:7]
+trainY2 <- select(train, 3,4,5,6,8) 
+testY2 <- select(test, 3,4,5,6,8) 
+df2 <- select(grafodf, 3,4,5,6,8) 
+```
+Construyo el modelo.
+```{r}
+fit1 <- rpart(Y1~., data = trainY1, method = 'class')
+rpart.plot(fit1, extra = 106)
+
+fit2 <- rpart(Y2~., data = trainY2, method = 'class')
+rpart.plot(fit2, extra = 106)
+```
+Predecimos:
+```{r}
+predict_Y1 <-predict(fit1, testY1, type = 'class')
+predict_Y2 <-predict(fit2, testY2, type = 'class')
+```
+Evaluamos los resultados de las predicciones con una matriz de confusión.
+```{r}
+table1 <- table(testY1$Y1, predict_Y1)
+table1
+table2 <- table(testY2$Y2, predict_Y2)
+table2
+```
+Y con la métrica de precisión (accuracy).
+```{r}
+accuracy1 <- sum(diag(table1)) / sum(table1)
+print(paste('Accuracy for test Y1:', accuracy1))
+accuracy2 <- sum(diag(table2)) / sum(table1)
+print(paste('Accuracy for test Y2:', accuracy2))
 ```

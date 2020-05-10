@@ -1,0 +1,76 @@
+---
+title: "Aprendizaje supervisado: Xgboost"
+output: html_notebook
+---
+
+En este apartado se lleva a cabo un estudio de tipo supervisado con el algoritmo de árbol de decisión XXX
+
+En primer lugar se instalan los paquetes y se cargan las librerías necesarias.
+```{r}
+#install.packages("xgboost")
+library(xgboost)
+library(dplyr)
+```
+Cargo el dataframe
+```{r}
+grafodf <- read.table("./dataframe.txt", header = TRUE, sep = ",")
+print(grafodf)
+```
+Cambio los nombres de las columnas para facilitar la aplicación de los algoritmos.
+```{r}
+colnames(grafodf) <- c("x", "NODOS", "X1","X2", "X3", "X4", "Y1", "Y2" )
+```
+
+Divido el conjunto de datos en test y train.
+```{r}
+set.seed(101)  
+sample <- sample.int(n = nrow(grafodf), size = floor(.75*nrow(grafodf)), replace = F)
+train <- grafodf[sample, ]
+test  <- grafodf[-sample, ]
+```
+Creamos dos conjuntos, uno para cada etiqueta.
+```{r}
+trainY1 <- train[, 2:7]
+testY1 <- test[, 2:7]
+df1 <- grafodf[, 2:7]
+trainY2 <- select(train, 3,4,5,6,8) 
+testY2 <- select(test, 3,4,5,6,8) 
+df2 <- select(grafodf, 3,4,5,6,8) 
+```
+Los convierto en matrices, que es lo que usa este algoritmo. 
+```{r}
+mtrain1 <- as.matrix(trainY1[, -1])
+mtest1 <- as.matrix(trainY1[, -1])
+mtrain2 <- as.matrix(trainY2[, -1])
+mtest2 <- as.matrix(trainY2[, -1])
+```
+
+Entreno el modelo.
+```{r}
+modelo1 <- xgboost(data = mtrain1, label = trainY1$Y1, max_depth = 2, eta = 1, nthread = 2, nrounds = 2, objective = "binary:logistic")
+
+modelo2 <- xgboost(data = mtrain2, label = trainY2$Y2, max_depth = 2, eta = 1, nthread = 2, nrounds = 2, objective = "binary:logistic")
+```
+Predigo con los modelos generados.
+```{r}
+pred1 <- predict(modelo1, mtest1)
+
+pred2 <- predict(modelo2, mtest2)
+```
+
+Transformo la regresión en una clasificación binaria.
+```{r}
+prediction1 <- as.numeric(pred1 > 0.5)
+
+prediction2 <- as.numeric(pred2 > 0.5)
+```
+Medida del error de las predicciones. 
+```{r}
+err1 <- mean(as.numeric(pred1 > 0.5) != testY1$Y1)
+print(paste("test-error Y1=", err1))
+
+err2 <- mean(as.numeric(pred2 > 0.5) != testY2$Y2)
+print(paste("test-error Y2=", err2))
+```
+
+Ahora cross validation

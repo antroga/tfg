@@ -38,7 +38,6 @@ set.seed(101)
 sample <- sample.int(n = nrow(grafodf), size = floor(.75*nrow(grafodf)), replace = F)
 train <- grafodf[sample, ]
 test  <- grafodf[-sample, ]
-
 ```
 Para aplicar el algoritmo, es necesario que las variables de respuesta sean factores.
 ```{r}
@@ -49,13 +48,23 @@ test$Y2 <- as.factor(test$Y2)
 grafodf$Y1 <- as.factor(grafodf$Y1)
 grafodf$Y2 <- as.factor(grafodf$Y2)
 ```
+Creamos dos conjuntos, uno para cada etiqueta.
+```{r}
+trainY1 <- train[, 2:7]
+testY1 <- test[, 2:7]
+df1 <- grafodf[, 2:7]
+trainY2 <- select(train, 3,4,5,6,8) 
+testY2 <- select(test, 3,4,5,6,8) 
+df2 <- select(grafodf, 3,4,5,6,8) 
+```
+
 Construimos el modelo.
 La semilla asegura la reproducibilidad de los cálculos.
 ```{r}
 set.seed(10111)
-modelo_svm1 <- svm(formula = Y1 ~ X1 + X2 + X3 + X4, data = train, kernel = "linear",
+modelo_svm1 <- svm(formula = Y1 ~ ., data = trainY1, kernel = "linear",
                   cost = 10, scale = FALSE)
-modelo_svm2 <- svm(formula = Y2 ~ X1 + X2 + X3 + X4, data = train, kernel = "linear",
+modelo_svm2 <- svm(formula = Y2 ~ ., data = trainY2, kernel = "linear",
                   cost = 10, scale = FALSE)
 ```
 Vemos las características del modelo. 
@@ -72,19 +81,19 @@ modelo_svm2$index
 Visualizamos los resultados para la predicción de la primera etiqueta (ser nodo aislado)
 ```{r}
 # Predicciones
-predicciones <- predict(object = modelo_svm1, test)
-paste("Error de test:", 100*mean(test$Y1 != predicciones),"%")
+predicciones <- predict(object = modelo_svm1, testY1)
+paste("Error de test:", 100*mean(testY1$Y1 != predicciones),"%")
 ```
-Visualizamos los resultados para la predicción de la primera etiqueta (ser nodo aislado)
+Visualizamos los resultados para la predicción de la segunda etiqueta (estar en la lista TCGA)
 ```{r}
 # Predicciones
-predicciones <- predict(object = modelo_svm2, test)
-paste("Error de test:", 100*mean(test$Y1 != predicciones),"%")
+predicciones <- predict(object = modelo_svm2, testY2)
+paste("Error de test:", 100*mean(testY2$Y2 != predicciones),"%")
 ```
 La función tune permite optimizar los hiperparámetros del modelo SVM.
 Para la etiqueta 1:
 ```{r}
-svm_cv1 <- tune("svm", Y1 ~ X1 + X2 + X3 + X4, data = grafodf[, 2:7],
+svm_cv1 <- tune("svm", Y1 ~ ., data = df1,
                kernel = 'linear',
                ranges = list(cost = c(0.001, 0.01, 0.1, 1, 5, 10, 20, 50, 100,
                                       150, 200)))
@@ -93,8 +102,7 @@ summary(svm_cv1)
 ```
 Para la etiqueta 2:
 ```{r}
-df2 <- select(grafodf, 3,4,5,6,8) 
-svm_cv2 <- tune("svm", Y2 ~ X1 + X2 + X3 + X4, data = df2,
+svm_cv2 <- tune("svm", Y2 ~ ., data = df2,
                kernel = 'linear',
                ranges = list(cost = c(0.001, 0.01, 0.1, 1, 5, 10, 20, 50, 100,
                                       150, 200)))
