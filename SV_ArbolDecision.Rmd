@@ -12,6 +12,7 @@ En primer lugar se instalan los paquetes y se cargan las librerías necesarias.
 library(rpart)
 library(rpart.plot)
 library(dplyr)
+library(caret)
 ```
 Cargo el dataframe
 ```{r}
@@ -23,7 +24,7 @@ Cambio los nombres de las columnas para facilitar la aplicación de los algoritm
 colnames(grafodf) <- c("x", "NODOS", "X1","X2", "X3", "X4", "Y1", "Y2" )
 ```
 
-Divido el conjunto de datos en test y train.
+Divido el conjunto de datos en test (75%) y train (25%).
 ```{r}
 set.seed(101)  
 sample <- sample.int(n = nrow(grafodf), size = floor(.75*nrow(grafodf)), replace = F)
@@ -66,4 +67,40 @@ accuracy1 <- sum(diag(table1)) / sum(table1)
 print(paste('Accuracy for test Y1:', accuracy1))
 accuracy2 <- sum(diag(table2)) / sum(table1)
 print(paste('Accuracy for test Y2:', accuracy2))
+```
+
+Ahora probamos el entrenamiento del modelo aplicando la validación cruzada.
+Aplicamos k-CV, con k = 5.
+```{r}
+folds1 <- createFolds(trainY1$Y1, k = 5)
+folds2 <- createFolds(trainY2$Y2, k = 5)
+```
+Entreno el modelo y evalúo los resultados. 
+```{r}
+cvDecisionTree1 <- lapply(folds1, function(x){
+  training_fold <- trainY1[-x, ]
+  test_fold <- trainY1[x, ]
+  clasificador <- rpart(Y1 ~ ., data = training_fold, method = 'class')
+  y_pred <- predict(clasificador, test_fold, type = 'class')
+  cm <- table(test_fold$Y1, y_pred)
+  precision <- (cm[1,1] + cm[2,2]) / (cm[1,1] + cm[2,2] +cm[1,2] + cm[2,1])
+  print(cm)
+  print(paste('Accuracy for test Y1:', precision))
+})
+
+cvDecisionTree2 <- lapply(folds2, function(x){
+  training_fold <- trainY2[-x, ]
+  test_fold <- trainY2[x, ]
+  clasificador <- rpart(Y2 ~ ., data = training_fold, method = 'class')
+  y_pred <- predict(clasificador, test_fold, type = 'class')
+  cm <- table(test_fold$Y2, y_pred)
+  precision <- (cm[1,1] + cm[2,2]) / (cm[1,1] + cm[2,2] +cm[1,2] + cm[2,1])
+  print(cm)
+  print(paste('Accuracy for test Y2:', precision))
+})
+```
+
+Probamos el modelo para el primer conjunto de test.
+```{r}
+
 ```
