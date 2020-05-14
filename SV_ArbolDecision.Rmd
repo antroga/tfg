@@ -9,17 +9,20 @@ En primer lugar se instalan los paquetes y se cargan las librerías necesarias.
 ```{r}
 #install.packages("rpart")
 #install.packages("rpart.plot")
+#install.packages("ROCR")
+#install.packages("gplots")
 library(rpart)
 library(rpart.plot)
 library(dplyr)
 library(caret)
+installed.packages("ROCR")
 ```
 Cargo el dataframe
 ```{r}
 grafodf <- read.table("./dataframe.txt", header = TRUE, sep = ",")
 print(grafodf)
 ```
-Cambio los nombres de las columnas para facilitar la aplicación de los algoritmos.
+Cambio los nombres de las columnas para facilitar la aplicación del algoritmo.
 ```{r}
 colnames(grafodf) <- c("x", "NODOS", "X1","X2", "X3", "X4", "Y1", "Y2" )
 ```
@@ -31,8 +34,29 @@ sample <- sample.int(n = nrow(grafodf), size = floor(.75*nrow(grafodf)), replace
 train <- grafodf[sample, ]
 test  <- grafodf[-sample, ]
 ```
-Creamos dos conjuntos, uno para cada etiqueta.
-(dim, class, de los conjuntos de test y train)
+Visualizamos los conjuntos.
+- Train. El conjunto de train está formado por 132 ejemplos.
+```{r}
+summary(train)
+dim(train)
+```
+Comprobamos que las etiquetas siguen una distribución similar al conjunto completo.
+```{r}
+hist(train$Y2)
+hist(train$Y1)
+```
+- Test. El conjunto de test está formado por 45 ejemplos.
+```{r}
+summary(test)
+dim(test)
+```
+Comprobamos que las etiquetas siguen una distribución similar al conjunto completo.
+```{r}
+hist(test$Y2)
+hist(test$Y1)
+```
+
+Creamos dos subconjuntos, uno para cada etiqueta.
 ```{r}
 trainY1 <- train[, 2:7]
 testY1 <- test[, 2:7]
@@ -41,66 +65,168 @@ trainY2 <- select(train, 3,4,5,6,8)
 testY2 <- select(test, 3,4,5,6,8) 
 df2 <- select(grafodf, 3,4,5,6,8) 
 ```
-Construyo el modelo.
+Creo una función que servirá para evaluar las predicciones de cada etiqueta.
+```{r}
+evaluacion1 <- function(fit) {
+    predicciones <- predict(fit, testY1, type = 'class')
+    table_mat <- table(testY1$Y1, predicciones)
+    accuracy_Test <- sum(diag(table_mat)) / sum(table_mat)
+    print(table_mat)
+    print(paste('Accuracy para Y1:', accuracy_Test))
+}
+
+evaluacion2 <- function(fit) {
+    predicciones <- predict(fit, testY2, type = 'class')
+    table_mat <- table(testY2$Y2, predicciones)
+    accuracy_Test <- sum(diag(table_mat)) / sum(table_mat)
+    print(table_mat)
+    print(paste('Accuracy para Y2:', accuracy_Test))
+}
+```
+
+Se construyen los modelos con los ajustes por defecto.
 ```{r}
 fit1 <- rpart(Y1~., data = trainY1, method = 'class')
-rpart.plot(fit1, extra = 106)
+rpart.plot(fit1)
 
 fit2 <- rpart(Y2~., data = trainY2, method = 'class')
-rpart.plot(fit2, extra = 106)
+rpart.plot(fit2)
 ```
-Predecimos:
+Observamos la construcción de los árboles.
+El primero:
 ```{r}
-predict_Y1 <-predict(fit1, testY1, type = 'class')
-predict_Y2 <-predict(fit2, testY2, type = 'class')
-```
-Evaluamos los resultados de las predicciones con una matriz de confusión.
-```{r}
-table1 <- table(testY1$Y1, predict_Y1)
-table1
-table2 <- table(testY2$Y2, predict_Y2)
-table2
-```
-Y con la métrica de precisión (accuracy).
-```{r}
-accuracy1 <- sum(diag(table1)) / sum(table1)
-print(paste('Accuracy for test Y1:', accuracy1))
-accuracy2 <- sum(diag(table2)) / sum(table1)
-print(paste('Accuracy for test Y2:', accuracy2))
+summary(fit1)
 ```
 
-Ahora probamos el entrenamiento del modelo aplicando la validación cruzada.
-Aplicamos k-CV, con k = 5.
+El segundo:
+```{r}
+summary(fit2)
+```
+Mostramos estadísticas del proceso de construcción del árbol.
+```{r}
+printcp(fit1) 
+printcp(fit2)
+```
+Vemos como varía el error a medida que aumentan los nodos.
+```{r}
+plotcp(fit1)
+plotcp(fit2)
+```
+El primer árbol, como podía verse en su representación gráfica, no presenta error y es muy simple.
+El segundo árbol obtiene los mejores resultados a partir de los 3 nodos.
+
+Predecimos y las evaluamos mediante la matriz de confusión y la métrica accuracy.
+- Etiqueta Y1 (ser nodo aislado):
+La precisión es 1. Todos los ejemplos se clasifican correctamente.
+```{r}
+evaluacion1(fit1)
+```
+- Etiqueta Y2 (estar en NGC).
+La precisión es de 0.74. 
+Los ejemplos de la clase 1 se clasifican correctamente, pero algunos de la clase 0 no.
+```{r}
+evaluacion1(fit2)
+```
+
+Ahora optimizamos los hiperparámetros del Árbol de decisión. Los ajustaremos para obtener un mejor rendimiento.
+
+
+El modelo que predice sobre la clase Y1 no puede mejorar puesto que la precisión es 1.
+Estos datos, además de la estructura del árbol construido, nos llevan a pensar que la clase en la que se basa la clasificación no es buena. Por ello, no seguiremos haciendo mejoras para los datos con Y1.
+
+Por otro lado, la precisión para el modelo que predice sobre Y2 ha mejorado ligeramente (de 0.73 a 0.76) tras la optimización de los hiperparámetros. El árbol se ha simplificado. 
+Para seguir ajustando, aplicaremos un proceso de validación cruzada con el objetivo de encontrar la mejor combinación.
+```{r}
+control <- rpart.control(minsplit = 4,
+    minbucket = round(5 / 3),
+    maxdepth = 3,
+    cp = 0)
+
+arbol1 <- rpart(Y1~., data = trainY1, method = 'class', control = control)
+evaluacion1(arbol1)
+rpart.plot(arbol1)
+
+arbol2 <- rpart(Y2~., data = trainY2, method = 'class', control = control)
+evaluacion2(arbol2)
+rpart.plot(arbol2)
+```
+La precisión de las predicciones sobre Y2 han mejorado.
+Sin embargo, la evaluación del modelo está sujeta a la división de los datos en conjuntos de test y train. 
+Para poder probar los modelos de una forma más completa, usamos la técnica de validación cruzada (cross-validation), dividiendo el conjunto de train en 5 subgrupos.
+
+(quitar lo referente a Y1?)
 ```{r}
 folds1 <- createFolds(trainY1$Y1, k = 5)
 folds2 <- createFolds(trainY2$Y2, k = 5)
 ```
 Entreno el modelo y evalúo los resultados. 
+Para Y1:
 ```{r}
 cvDecisionTree1 <- lapply(folds1, function(x){
+  accuracy = c()
   training_fold <- trainY1[-x, ]
   test_fold <- trainY1[x, ]
   clasificador <- rpart(Y1 ~ ., data = training_fold, method = 'class')
   y_pred <- predict(clasificador, test_fold, type = 'class')
+  pred_test <- predict(clasificador, testY1, type = 'class')
   cm <- table(test_fold$Y1, y_pred)
-  precision <- (cm[1,1] + cm[2,2]) / (cm[1,1] + cm[2,2] +cm[1,2] + cm[2,1])
+  precision <- sum(diag(cm)) / sum(cm)
   print(cm)
-  print(paste('Accuracy for test Y1:', precision))
+  accuracy <- precision
+  print(paste('Accuracy para cv de Y1:', precision))
+  cm2 <- table(testY1$Y1, pred_test)
+  print(cm2)
+  precision2 <- (cm2[1,1] + cm2[2,2]) / (cm2[1,1] + cm2[2,2] +cm2[1,2] + cm2[2,1])
+  accuracy <- precision2
+  print(paste('Accuracy para test de Y1:', precision2))
+  print('***********************')
+  return(accuracy)
 })
+```
+Evaluamos los resultados, aunque la precisión es siempre 1.
+```{r}
+l <- cvDecisionTree1
+lista <- c(l$Fold1, l$Fold2, l$Fold3, l$Fold4, l$Fold5)
+print(paste('Media de accuracy para Y1 con CV:', mean(lista)))
+print(paste('Accuracy máximo para Y1 con CV:', max(lista)))
+```
 
+Para Y2:
+```{r}
 cvDecisionTree2 <- lapply(folds2, function(x){
+  accuracy = c()
   training_fold <- trainY2[-x, ]
   test_fold <- trainY2[x, ]
   clasificador <- rpart(Y2 ~ ., data = training_fold, method = 'class')
   y_pred <- predict(clasificador, test_fold, type = 'class')
+  pred_test <- predict(clasificador, testY2, type = 'class')
   cm <- table(test_fold$Y2, y_pred)
-  precision <- (cm[1,1] + cm[2,2]) / (cm[1,1] + cm[2,2] +cm[1,2] + cm[2,1])
+  precision <- sum(diag(cm)) / sum(cm)
   print(cm)
-  print(paste('Accuracy for test Y2:', precision))
+  accuracy <- precision
+  print(paste('Accuracy para cv de Y2:', precision))
+  cm2 <- table(testY2$Y2, pred_test)
+  print(cm2)
+  precision2 <- sum(diag(cm)) / sum(cm)
+  accuracy <- precision2
+  print(paste('Accuracy para test de Y2:', precision2))
+  print('***********************')
+  return(accuracy)
 })
 ```
-
-Probamos el modelo para el primer conjunto de test.
+Evaluamos los resultados. 
+La media de precisión es 0.81.
+El mejor dato consigue una precisión de 0.84.
+```{r}
+l <- cvDecisionTree2
+lista <- c(l$Fold1, l$Fold2, l$Fold3, l$Fold4, l$Fold5)
+print(paste('Media de accuracy para Y2 con CV:', mean(lista)))
+print(paste('Accuracy máximo para Y2 con CV:', max(lista)))
+```
+PODA?
 ```{r}
 
 ```
+
+La calidad de las predicciones han mejorado con la optimización del algoritmo y el entrenamiento del modelo con validación cruzada. 
+

@@ -13,7 +13,7 @@ library(igraph)
 library(readxl)
 library(corrplot)
 ```
-Cargo el dataframe y me quedo con las métricas para estudiar la relación que tienen entre sí.
+Cargo el dataframe.
 ```{r}
 df <- read.table("./dataframe.txt", header = TRUE, sep = ",")
 ```
@@ -79,7 +79,6 @@ Este dataset será usado para aprendizaje supervisado.
 Por ello, debe contener un campo que funcione como etiqueta cuyo valor intentaremos predecir.
 Ahora estudiamos la distribución de las etiquetas dentro del conjunto de datos.
 ```{r}
-
 hist(df$Nodo.aislado)
 hist(df$Estar.TCGA)
 ```

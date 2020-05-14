@@ -30,17 +30,27 @@ grafo_origen <-
 #Podo cogiendo como umbral 0.4
 grafo <- delete_edges(grafo_origen, E(grafo_origen)[PESO<0.4])
 ```
+Cargo el dataframe con las medidas de centralidad, cogiendo solo datos numéricoS, y estandarizo los datos.
+```{r}
+df <- read.table("./dataframe.txt", header = TRUE, sep = ",")
+grafodf <- df[, 3:6 ]
+grafodf$Degree <- scale(grafodf$Degree)
+grafodf$Centrality <- scale(grafodf$Centrality)
+grafodf$Closeness <- scale(grafodf$Closeness)
+grafodf$Betweeness <- scale(grafodf$Betweeness)
+grafodf
+
+```
 
 Generamos la matriz de adyacencia.
 ```{r}
 matgraf <- get.adjacency(grafo, attr="PESO", sparse=F)
 ```
 
-ALGORITMO K-MEANS
+ALGORITMO K-MEANS: Matriz de adyacencia
 
 En primer lugar, observamos el valor optimo de k que resulta ser k=4.
 ```{r}
-
 fnb<- fviz_nbclust(matgraf, kmeans, method = "silhouette")
 fnb
 ```
@@ -64,17 +74,53 @@ km_clusteres <- km_grafo$cluster
 kmclust <- data.frame(nodos, km_clusteres)
 
 c1 <- filter(kmclust, kmclust$km_clusteres == 1)
-c1$NODOS
+c1
 c2 <- filter(kmclust, kmclust$km_clusteres == 2)
-c2$NODOS
+c2
 c3 <- filter(kmclust, kmclust$km_clusteres == 3)
-c3$NODOS
+c3
 c4 <- filter(kmclust, kmclust$km_clusteres == 4)
-c4$NODOS
-
+c4
 ```
 
-CLUSTERING JERARQUICO
+ALGORITMO K-MEANS: Dataframe con medidas de centralidad.
+
+En primer lugar, observamos el valor optimo de k que resulta ser k=3.
+```{r}
+fnb<- fviz_nbclust(grafodf, kmeans, method = "silhouette")
+fnb$data
+fnb
+```
+
+Aplicamos el clustering con kmeans para k=3.
+```{r}
+km_grafo <- kmeans(grafodf, centers = 3, nstart = 20)
+
+#visualización
+plot(grafodf, col= km_grafo$cluster, main="k-means k=3")
+
+plot(matgraf, col= km_grafo$cluster, main="k-means k=3")
+```
+
+Se observan las características del conjunto de datos.
+```{r}
+summary(km_grafo)
+```
+
+Estudiamos cada cluster por separado.
+```{r}
+km_clusteres <- km_grafo$cluster
+kmclust <- data.frame(nodos, km_clusteres)
+
+c1 <- filter(kmclust, kmclust$km_clusteres == 1)
+c1
+c2 <- filter(kmclust, kmclust$km_clusteres == 2)
+c2
+c3 <- filter(kmclust, kmclust$km_clusteres == 3)
+c3
+```
+
+CLUSTERING JERÁRQUICO: Matriz de adyacencia.
 
 Observamos el numero óptimo de clusters.
 
@@ -112,17 +158,70 @@ Se estudian los clusteres por separado.
 hjclust <- data.frame(nodos, grupos1) 
 
 c1 <- filter(hjclust, hjclust$grupos1 == 1)
+c1
 c2 <- filter(hjclust, hjclust$grupos1 == 2)
-c2$NODOS
-
+c2
 ```
 
-Represento graficamente las comunidades descubiertas en usando la forma de matriz de distancias para poder comparar los resultados.
+CLUSTERING JERÁRQUICO: Dataframe.
+
+Observamos el numero óptimo de clusters.
+
+```{r}
+fnv<- fviz_nbclust(grafodf, hcut, method = "silhouette")
+fnv
+fnv$data
+```
+Obtengo la matriz de distancias y el dendograma.
+```{r}
+#1- matriz de distancias con dist
+matriz_dist <- dist(grafodf)
+#2- hclust para construir dendograma
+hclust_aux <- hclust(matriz_dist, method = "average")
+plot(hclust_aux)
+```
+Corto el dendograma para k = 6
+```{r}
+#3- cortar el dendograma y obtener clusters con cutree
+grupos1 <- cutree(hclust_aux, k=6)
+
+#represento los resultados
+plot(grafodf, col=grupos1, main = "Clustering jerárquico k=6")
+plot(matgraf, col=grupos1, main = "Clustering jerárquico k=6")
+```
+
+Se observan las características de los datos generados.
+```{r}
+summary(grupos1)
+```
+
+Se estudian los clusteres por separado.
+```{r}
+hjclust <- data.frame(nodos, grupos1) 
+
+c1 <- filter(hjclust, hjclust$grupos1 == 1)
+c1
+c2 <- filter(hjclust, hjclust$grupos1 == 2)
+c2
+c3 <- filter(hjclust, hjclust$grupos1 == 3)
+c3
+c4 <- filter(hjclust, hjclust$grupos1 == 4)
+c4
+c5 <- filter(hjclust, hjclust$grupos1 == 5)
+c5
+c6 <- filter(hjclust, hjclust$grupos1 == 6)
+c6
+```
+
+
+COMPARACIÓN DE CLÚSTERES Y COMUNIDADES.
+
+Represento gráficamente las comunidades del descubrimiento de comunidades usando la forma de matriz de distancias para poder comparar con estos resultados.
 ```{r}
 set.seed(55)
 inicio<-sample(c(0:176), size = 177, replace = TRUE)
 clp <- cluster_label_prop(grafo, initial = inicio)
 plot(matgraf, col= clp$membership, main="Propagación de etiquetas, k=2")
 cfg <- cluster_fast_greedy(grafo)
-plot(matgraf, col= cfg$membership, main="Optimizacion de la modularidad, k=3")
+plot(matgraf, col= cfg$membership, main="Optimización de la modularidad, k=3")
 ```
