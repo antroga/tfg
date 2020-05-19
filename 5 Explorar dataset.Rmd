@@ -1,0 +1,103 @@
+---
+title: "Exploración del dataset"
+output: html_notebook
+---
+
+En el paso anterior se ha generado un dataset que contiene los nodos del grafo y los valores de cuatro medidas de centralidad estudiadas en cada uno de ellos.
+Ahora nos disponemos a realizar un estudio preliminar del mismo.
+
+Cargamos las librerías necesarias. 
+```{r}
+#install.packages("corrplot")
+library(igraph)
+library(readxl)
+library(corrplot)
+```
+Cargo el dataframe.
+```{r}
+grafodf <- read.table("./dataframe.txt", header = TRUE, sep = ",")
+```
+Inspeccionamos el dataset generado.
+```{r}
+print(grafodf)
+```
+
+El dataset esta formado por 177 filas y 7 columnas. La primera de ellas contiene los genes que eran los nodos del grafo, las cuatro siguientes los datos de las medidas de centralidad que se usan como base para el aprendizaje supervisado.
+
+```{r}
+summary(grafodf)
+```
+En primer lugar, veremos la relación entre los predictores (las medidas de centralidad).
+Lo observamos gráficamente.
+```{r}
+plot(grafodf[, 2:5])
+```
+Y representamos en un histograma cada uno de los atributos para ver su distribución.
+```{r}
+hist(grafodf$Degree)
+hist(grafodf$Centrality)
+hist(grafodf$Closeness)
+hist(grafodf$Betweenness)
+```
+- Degree: los datos estan balanceados. El rango de valores es (0, 80). Hay mayor tasa de nodos en los valores inferiores a 10.
+- Centrality: los datos estan balanceados. El rango de valores es (0, 1). Se observa mayor cantidad de datos en los valores inferiores a o.3.
+- Closeness. Los datos se agrupan o bien en inferiores a o,01 o en superiores a 0.045. En medio no existen datos. El rango de valores es (0, 0.006)
+- Betweeness. La gran mayoría de ejemplos tienen un valor inferior a 1000. El rango de valores es (0, 7000).
+
+
+Debido a la disparidad de valores para los distintos atributos del dataframe, los normalizamos para que se encuentren todos entre 0 y 1. 
+```{r}
+grafodf$Degree <- (grafodf$Degree - min(grafodf$Degree)) / (max(grafodf$Degree) - min(grafodf$Degree))
+grafodf$Centrality <- (grafodf$Centrality - min(grafodf$Centrality)) / (max(grafodf$Centrality) - min(grafodf$Centrality))
+grafodf$Closeness <- (grafodf$Closeness - min(grafodf$Closeness)) / (max(grafodf$Closeness) - min(grafodf$Closeness))
+grafodf$Betweenness <- (grafodf$Betweenness - min(grafodf$Betweenness)) / (max(grafodf$Betweenness) - min(grafodf$Betweenness))
+
+grafodf
+```
+
+
+Generamos la matriz de correlación entre los atributos.
+```{r}
+cormatrix <- cor(grafodf[,2:5], method = "pearson")
+print(cormatrix)
+```
+Y la representamos gráficamente.
+```{r}
+corrplot(cormatrix, type = "upper", order = "hclust", 
+         tl.col = "black", tl.srt = 45)
+```
+
+Y con un mapa de calor:
+```{r}
+col<- colorRampPalette(c("blue", "white", "red"))(20)
+heatmap(x = cormatrix, col = col, symm = TRUE)
+```
+
+De aquí podemos concluir que existe una mayor relación entre las medidas de "centrality" y "degree" y la menor correlación se da entre "degree" y "betweenness". 
+
+
+Este dataset será usado para aprendizaje supervisado.
+Por ello, debe contener un campo que funcione como etiqueta cuyo valor intentaremos predecir.
+Ahora estudiamos la distribución de las etiquetas dentro del conjunto de datos.
+```{r}
+hist(grafodf$Nodo.aislado)
+hist(grafodf$Estar.NCG)
+```
+En ambos casos, la mayoría de ejemplos se clasifican dentro de la clase 0, es decir, no poseen las características a las que aluden las etiquetas ("ser nodo aislado", "estar en TCGA").
+Los datos por tanto no se encuentran balanceados entre las dos categorías de clasificación (1 y 2).
+
+Representamos gráficamente el dataframe completo.
+```{r}
+plot(grafodf)
+```
+Y visualizamos la correlación entre todos los elementos numéricos del dataframe. 
+```{r}
+cm <- cor(grafodf[,2:7], method = "pearson")
+print(cormatrix)
+corrplot(cm, type = "upper", order = "hclust", 
+         tl.col = "black", tl.srt = 45)
+```
+Finalmente, volvemos a guardar el dataframe con los valores estandarizados con el objetivo de  mejorar los cálculos a realizar sobre él.
+```{r}
+write.csv(grafodf, file="grafodf.txt")
+```

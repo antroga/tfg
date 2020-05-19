@@ -4,7 +4,7 @@ output: html_notebook
 ---
 
 El grafo podado generado con anterioridad se estudia desde diferentes perspectivas.
-En est Notebook se analizaran distintas metricas para los nodos del grafo.
+En est Notebook se analizaran distintas métricas para cada uno de los nodos del grafo.
 
 Primero, cargamos las librerias necesarias.
 ```{r}
@@ -12,7 +12,7 @@ library(igraph)
 library(readxl)
 ```
 
-A continuacion, cargamos el grafo.
+A continuación, cargamos el grafo.
 ```{r}
 #Cargo datos
 aristas <- read_excel("./Dataset1.xlsx", 
@@ -26,6 +26,7 @@ grafo_origen <-
 #Podo cogiendo como umbral 0.4
 grafo <- delete_edges(grafo_origen, E(grafo_origen)[PESO<0.4])
 ```
+
 En primer lugar, calculo medidas relativas al grafo en su conjunto:
 - Densidad
 - Diámetro
@@ -36,18 +37,18 @@ edge_density(grafo, loops=F)
 #Diametro
 diameter(grafo, directed = F)
 ```
-A continuación medidas que se calculan sobre cada nodo.
+A continuación, métricas que se calculan sobre cada nodo. Estas se conocen como medidas de centralidad. 
 
 - Degree (grado):
 ```{r}
-deg <- degree(grafo, mode = "all")
+deg <- degree(grafo, mode = "all", loops=F)
 degdf <- data.frame(nodos, deg)
 degdf[order(-degdf$deg),]
 ```
 
 - Centrality (centralidad por eigenvector) 
 ```{r}
-cent_eing <- centr_eigen(grafo, directed = F, normalized = T)
+cent_eing <- centr_eigen(grafo, directed = F, normalized = F)
 eigencen <- data.frame(nodos, cent_eing$vector)
 eigencen[order(-eigencen$cent_eing.vector),]
 
@@ -55,14 +56,16 @@ eigencen[order(-eigencen$cent_eing.vector),]
 
 - Closeness (cercanía)
 ```{r}
-cent_clo <-centr_clo(grafo, mode = "all", normalized = T)
+cent_clo <-centr_clo(grafo, mode = "all", normalized = F)
 clossenes <- data.frame(nodos, cent_clo$res)
 clossenes[order(-clossenes$cent_clo.res),]
 ```
 
 - Betweeness (vecindad)
 ```{r}
-bet <- betweenness(grafo, directed = F)
+bet <- betweenness(grafo, directed = F, weights = E(grafo))
 betdf <- data.frame(nodos, bet)
 betdf[order(-betdf$bet),]
 ```
+
+En cada caso se han mostrado los nodos con mejores valores para cada una de las medidas, con el objetivo de establecer un ranking sobre ellos.  

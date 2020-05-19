@@ -38,7 +38,7 @@ close <- closeness(grafo, mode= "all", normalized = T)
 eig_cent <- eigen_centrality(grafo, directed = F)
 
 #Betweenness
-bet <- betweenness(grafo, directed = F)
+bet <- betweenness(grafo, directed = F, weights = E(grafo))
 
 ```
 
@@ -63,22 +63,21 @@ for(i in indices){
   }
   l1[i] <- n
 }
-l1
 ```
 
-- Información de conocimiento experto --> red de TCGA:
+- Información de conocimiento experto --> red de NCG:
 
 Para ello, cargamos el listado de genes
 ```{r}
 genes <- read.delim('cancergenes_list.txt', header = TRUE, sep = "\t")
 ```
-Comparamos la lista de oncogenes de TCGA con los nodos del grafo. 
+Comparamos la lista de oncogenes de NCG con los nodos del grafo. 
 ```{r}
 colnames(genes) <- c("NODOS", "candidatos")
 en_comun <- merge(nodos, genes)
 known <- en_comun$NODOS
 ```
-Comparamos la lista de genes candidatos a ser oncogenes de TCGA con los nodos del grafo.
+Comparamos la lista de genes candidatos a ser oncogenes de NCG con los nodos del grafo.
 ```{r}
 colnames(genes) <- c("Oncogenes", "NODOS")
 en_comun <- merge(nodos, genes)
@@ -105,13 +104,12 @@ for(i in indices){
 Genero el dataset creando un dataframe con los vectores obtenidos anteriormente.
 ```{r}
 grafodf <- data.frame(
-  "Nodos" = nodos,
   "Degree" = deg,
   "Centrality" = eig_cent$vector,
   "Closeness" = close, 
-  "Betweeness" = bet,
+  "Betweenness" = bet,
   "Nodo aislado" = l1,
-  "Estar TCGA" = l2
+  "Estar NCG" = l2
 )
 ```
 

@@ -3,9 +3,9 @@ title: "Construcción de la red"
 output: html_notebook
 ---
 
-Se construye una red de oncogenes a partir del material proporcionado en el artículo en forma de archivo excel.
+Se construye una red de oncogenes a partir del material proporcionado en el artículo en forma de archivo Excel.
 
-En primer lugar cargamos (instalamos previamente) las librerías necesarias. 
+En primer lugar cargamos (instalamos previamente si se requiere) las librerías necesarias. 
 ```{r}
 #install.packages("igraph")
 #install.packages("readxl")
@@ -82,12 +82,12 @@ heatmap(netm[,177:1], Rowv = NA, Colv = NA, col = palf(100),
 Tras esta primera observacion del grafo, pensamos que su gran tamaño puede dificultar las tareas de clustering y aprendizaje supervisado, por lo que resolvemos podar el grafo a fin de facilitar estas operaciones.
 
 Primero, para entender mejor la red, representamos las aristas en función de su peso. Comprobamos que la mayoría tienen un peso inferior a 0.5.
+La frecuencia de las aristas es mayor con valores de peso pequeños, y va disminuyendo a medida que aumenta el valor del peso. 
 ```{r}
 hist(aristas$PESO, xlab = "Peso", ylab = "Frecuencia")
 ```
-
-Se representa, por un lado, el número de aristas en función del umbral de poda y por otro lado el número de clústeres en relación a este umbral.
-El umbral de poda está comprendido entre 0 y 1, incrementándose en 0.05 tras cada iteración. 
+Como paso previo a la poda, representamos el número de aristas en función de la densidad de estas y del número de subredes encontradas. 
+La poda se realiza en función del peso de las aristas. Así, el umbral de poda está comprendido entre 0 y 1, incrementándose en 0.05 tras cada iteración. 
 ```{r}
 umbral = seq(-0.1 , 1, by=0.05)
 no = c(0)
@@ -103,7 +103,8 @@ for (x in umbral){
 plot (x= umbral, y =no, xlab = "Umbral" ,ylab ="Numero de subredes")
 plot (x= umbral, y =ar, xlab = "Umbral" ,ylab ="Densidad de aristas")
 ```
-Visualizando las gráficas, tomamos 0.4 como el umbral de poda de las aristas del grafo. El grafo podado es sobre el que realizaremos las operaciones siguientes. 
+Visualizando las gráficas, podemos ver que a patir de 0.4 el número de subredes crece exponencialmente. Para este valor, la denssiad de aristas ha disminuido notablemente, pero aún no se acerca demasiado a 0.
+Por ello, tomamos 0.4 como el umbral de poda de las aristas del grafo. El grafo podado es sobre el que realizaremos las operaciones siguientes. 
 ```{r}
 g4 <- delete_edges(grafo, E(grafo)[PESO<0.4])
 ```
@@ -117,7 +118,7 @@ E(g4)
 plot(g4)
 ```
 Observamos de nuevo la matriz de adyacencia.
-Cuenta con muchas mas zonas de color amarillo claro, que denota una menor relacion entre los nodos presentes.
+Cuenta con muchas mas zonas de color amarillo claro, que denota una menor relación entre los nodos presentes.
 ```{r}
 netm <- get.adjacency(g4, attr="PESO", sparse=F)
 colnames(netm) <- nodos$NODOS
@@ -127,8 +128,10 @@ palf <- colorRampPalette(c("gold", "dark orange"))
 heatmap(netm[,177:1], Rowv = NA, Colv = NA, col = palf(100), 
         scale="none", margins=c(3,1) )
 ```
-Matriz de distancias
+Visualizamos la matriz de distancias
 ```{r}
 distM <- shortest.paths(g4, weights = E(g4)$PESO)
 distM
 ```
+
+Con esto hemos construido la red de oncogenes objeto de estudio y nos hemos acercado un poco a su topología. 

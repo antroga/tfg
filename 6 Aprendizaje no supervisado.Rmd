@@ -1,0 +1,106 @@
+---
+title: "Aprendizaje no supervisado sobre el dataframe"
+output: html_notebook
+---
+
+En este notebook se lleva a cabo un análisis no supervisado para dividir en clústeres o subgrafos la red de oncogenes que estamos estudiando.
+La idea es comparar los datos obtenidos con el aprendizaje no supervisado y el descubrimiento de comunidades.
+Se hace uso de dos tipos de clustering: jerárquico y con kmeans.
+
+
+En primer lugar, cargamos las librerías necesarias.
+```{r}
+#install.packages("factoextra")
+#install.packages('ggplot2')
+library(igraph)
+library(readxl)
+library(factoextra)
+library(dplyr)
+```
+Cargo el dataframe construido anteriormente. Nos quedamos solo con los atributos que sirven como predictores, los elementos que funcionan como etiqueta no interesan en este paso.
+```{r}
+df <- read.table("./grafodf.txt", header = TRUE, sep = ",")
+grafodf <- df[, 3:6]
+nodos <- df[, 2]
+grafodf
+```
+
+ALGORITMO K-MEANs
+
+En primer lugar, observamos el valor optimo de k que resulta ser k=3.
+```{r}
+fnb<- fviz_nbclust(grafodf, kmeans, method = "silhouette")
+fnb$data
+fnb
+```
+
+Aplicamos el clustering con kmeans para k=3.
+```{r}
+km_grafo <- kmeans(grafodf, centers = 3, nstart = 20)
+
+#visualización
+plot(grafodf, col= km_grafo$cluster, main="k-means k=3")
+```
+
+Se observan las características del conjunto de datos.
+```{r}
+summary(km_grafo)
+```
+
+Se observa cada clúster por separado.
+```{r}
+km_clusteres <- km_grafo$cluster
+kmclust <- data.frame(nodos, km_clusteres)
+
+c1 <- filter(kmclust, kmclust$km_clusteres == 1)
+c1
+c2 <- filter(kmclust, kmclust$km_clusteres == 2)
+c2
+c3 <- filter(kmclust, kmclust$km_clusteres == 3)
+c3
+```
+
+CLUSTERING JERÁRQUICO
+
+Observamos el numero óptimo de clusters que resulta ser k =4.
+
+```{r}
+fnv<- fviz_nbclust(grafodf, hcut, method = "silhouette")
+fnv
+fnv$data
+```
+Obtengo la matriz de distancias y el dendograma.
+```{r}
+#1- matriz de distancias con dist
+matriz_dist <- dist(grafodf)
+#2- hclust para construir dendograma
+hclust_aux <- hclust(matriz_dist, method = "average")
+plot(hclust_aux)
+```
+Corto el dendograma para k = 4
+```{r}
+#3- cortar el dendograma y obtener clusters con cutree
+grupos1 <- cutree(hclust_aux, k=4)
+
+#represento los resultados
+plot(grafodf, col=grupos1, main = "Clustering jerárquico k=4")
+```
+
+Se observan las características de los datos generados.
+```{r}
+summary(grupos1)
+```
+
+Se estudian los clusteres por separado.
+```{r}
+hjclust <- data.frame(nodos, grupos1) 
+
+c1 <- filter(hjclust, hjclust$grupos1 == 1)
+c1
+c2 <- filter(hjclust, hjclust$grupos1 == 2)
+c2
+c3 <- filter(hjclust, hjclust$grupos1 == 3)
+c3
+c4 <- filter(hjclust, hjclust$grupos1 == 4)
+c4
+```

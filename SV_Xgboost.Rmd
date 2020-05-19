@@ -10,69 +10,66 @@ En primer lugar se instalan los paquetes y se cargan las librerías necesarias.
 #install.packages("xgboost")
 library(xgboost)
 library(dplyr)
+packageurl <- "http://cran.r-project.org/src/contrib/Archive/ggplot2/ggplot2_0.9.1.tar.gz"
+#install.packages(packageurl, repos=NULL, type="source")
 library(caret)
 ```
 Cargo el dataframe
 ```{r}
-grafodf <- read.table("./dataframe.txt", header = TRUE, sep = ",")
-print(grafodf)
+grafodf <- read.table("./grafodf.txt", header = TRUE, sep = ",")
 ```
 Cambio los nombres de las columnas para facilitar la aplicación de los algoritmos.
 ```{r}
-colnames(grafodf) <- c("x", "NODOS", "X1","X2", "X3", "X4", "Y1", "Y2" )
+colnames(grafodf) <- c("ID", "NODOS", "X0","X1", "X2", "X3", "Y1", "Y2" )
+grafodf
+```
+Creo dos conjuntos, uno para cada etiqueta.
+```{r}
+df1 <- grafodf[, 3:7]
+df2 <- select(grafodf,3,4,5,6, 8) 
+df2$Y2 <- as.numeric(df2$Y2)
+```
+Divido el conjunto de datos en test (75%) y train (25%), para ambas etiquetas.
+- Y1.
+```{r}
+set.seed(3456)
+
+trainIndex1 <- createDataPartition(df1$Y1, p = .75, 
+                                  list = FALSE)
+trainY1 <- df1[ trainIndex1,]
+testY1  <- df1[-trainIndex1,]
+```
+Visualizamos los conjuntos.
+El conjunto de train está formado por 133 ejemplos y el de test, por 44.
+```{r}
+summary(trainY1)
+dim(trainY1)
+summary(testY1)
+dim(testY1)
 ```
 
-Divido el conjunto de datos en test (75%) y train (25%).
+- Y2.
 ```{r}
-set.seed(101)  
-sample <- sample.int(n = nrow(grafodf), size = floor(.75*nrow(grafodf)), replace = F)
-train <- grafodf[sample, ]
-test  <- grafodf[-sample, ]
+set.seed(1)
+trainIndex2 <- createDataPartition(df2$Y2, p = .75, 
+                                  list = FALSE)
+trainY2 <- df2[ trainIndex2,]
+testY2  <- df2[-trainIndex2,]
 ```
-Creamos dos conjuntos, uno para cada etiqueta.
+Visualizamos los conjuntos.
+El conjunto de train está formado por 133 ejemplos y el de test, por 44.
 ```{r}
-trainY1 <- train[, 2:7]
-testY1 <- test[, 2:7]
-df1 <- grafodf[, 2:7]
-trainY2 <- select(train, 3,4,5,6,8) 
-testY2 <- select(test, 3,4,5,6,8) 
-df2 <- select(grafodf, 3,4,5,6,8) 
-```
-Los convierto en matrices, que es lo que usa este algoritmo como dato de entrada.
-```{r}
-mtrain1 <- as.matrix(trainY1[, -1])
-mtest1 <- as.matrix(testY1[, -1])
-mtrain2 <- as.matrix(trainY2[, -1])
-mtest2 <- as.matrix(testY2[, -1])
-```
-Creo una función que evaluará la calidad de los modelos.
-```{r}
-evaluacion1 <- function(fit) {
-    pred1 <- predict(fit, mtest1, type = 'class')
-    predicciones <- as.numeric(pred1 > 0.5)
-    table_mat <- table(testY1$Y1, predicciones)
-    accuracy_Test <- sum(diag(table_mat)) / sum(table_mat)
-    print(table_mat)
-    print(paste('Accuracy para Y1:', accuracy_Test))
-}
-
-evaluacion2 <- function(fit) {
-    pred2 <- predict(fit, mtest2, type = 'class')
-    predicciones <- as.numeric(pred2 > 0.5)
-    table_mat <- table(testY2$Y2, predicciones)
-    accuracy_Test <- sum(diag(table_mat)) / sum(table_mat)
-    print(table_mat)
-    print(paste('Accuracy para Y2:', accuracy_Test))
-}
+summary(trainY2)
+dim(trainY2)
+summary(testY2)
+dim(testY2)
 ```
 
-Entreno los modelos
+Genero los modelos con los datos por defecto.
 ```{r}
-modelo1 <- xgboost(data = mtrain1, label = trainY1$Y1, max.depth = 2,
-               eta = 1, nthread = 2, nround = 2, objective = "binary:logistic")
+modelo1 <- xgboost(data = as.matrix(trainY1), label = trainY1$Y1, nround = 2, objective = "binary:logistic")
 
-modelo2 <- xgboost(data = mtrain2, label = trainY2$Y2, max.depth = 2,
-               eta = 1, nthread = 2, nround = 2, objective = "binary:logistic")
+modelo2 <- xgboost(data =as.matrix(trainY2), label = trainY2$Y2, nround = 2, objective = "binary:logistic")
 ```
 Observo las características de los modelos generados.
 ```{r}
@@ -82,16 +79,48 @@ summary(modelo2)
 
 Evalúo los resultados.
 - Etiqueta Y1 (ser nodo aislado):
+Como siempre, las métricas Accuracy y Kappa son 1. 
 ```{r}
-evaluacion1(modelo1)
+pred1 <- predict(modelo1, newdata =as.matrix(testY1))
+predicciones <- as.numeric(pred1 > 0.5)
+confusionMatrix(table(predicciones, testY1$Y1))
 ```
 - Etiqueta Y2 (estar en NGC):
+La precisión es 1.
 ```{r}
-evaluacion2(modelo2)
+pred2 <- predict(modelo2, newdata =as.matrix(testY2))
+predicciones <- as.numeric(pred2 > 0.5)
+confusionMatrix(table(predicciones, testY2$Y2))
 ```
+Los modelos tienen un desempeño perfecto. Puede deberse a un sobre ajuste de los mismos.
 
-Los modelos tienen un desempeño perfecto. ¿Por qué?
+
+QUIZÁ QUITO DE AQUÍ PABAJO
+A continuación los entrenaremos cambiando los parámetros por defecto con kCV, validación cruzada con k = 10.
 ```{r}
+control_class <- trainControl(
+  method = "cv",
+  number = 10)
+```
+Para el algoritmo XgbTree se pueden optimizar:
+nrounds, max_depth, eta, gamma, colsample_bytree, min_child_weight, subsample
 
+- Etiqueta Y1 (ser nodo aislado)
+```{r}
+trainY1$Y1 <- as.numeric(trainY1$Y1)
+modelo1 <- train(Y1 ~ . , trainY1,
+                 tuneGrid = expand.grid(
+                     nrounds = c(3,5,7),
+                     max_depth = c(3, 5,7), 
+                     eta= c(2,4,6),
+                     gamma = c(0.5, 1),
+                     colsample_bytree = c(1,2),
+                     min_child_weight = c(5,10),
+                     subsample = 1
+                 ),
+                 method = "xgbTree",
+                 trControl=control_class)
+
+print(model_clas_xgbTree)
 ```
 

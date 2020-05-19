@@ -1,0 +1,143 @@
+---
+title: "Aprendizaje supervisado"
+output: html_notebook
+---
+
+En las experimentaciones anteriores se han utilizado tres algoritmos distintos para aprendizaje supervisado (árbol de decisión, Xgboost y SVM). 
+El hecho de que las clases de clasificación estén muy desbalanceadas hace que los modelos generados no clasifiquen como se espera.
+Además, se ha comprobado experimentalmente que la clase Y1 (ser nodo aislado) no es una buena categoría para clasificar los ejemplos.
+
+Así, en este notebook se trabaja con los predictores y la clase restante, Y2 (estar en NCG), intentando solventar el problema del desbalance.
+
+En primer lugar se instalan los paquetes y se cargan las librerías necesarias.
+```{r}
+library(dplyr)
+library(igraph)
+library(readxl)
+library(rpart)
+library(rpart.plot)
+library(e1071)
+library(xgboost)
+library(caret)
+```
+
+Cargo el dataframe
+```{r}
+grafodf <- read.table("./grafodf.txt", header = TRUE, sep = ",")
+```
+Cambio los nombres de las columnas para facilitar la aplicación de los algoritmos.
+```{r}
+colnames(grafodf) <- c("ID","NODOS", "X1","X2", "X3", "X4", "Y1", "Y2" )
+```
+Como puede verse en el histograma, las clases de clasificación están muy desbalanceadas.
+```{r}
+hist(grafodf$Y2)
+```
+Para aplicar el algoritmo, es necesario que las variables de respuesta sean factores.
+```{r}
+grafodf$Y2 <- as.factor(grafodf$Y2)
+```
+
+Me quedo con los predictores y la etiqueta Y2.
+```{r}
+df2 <- select(grafodf,3,4,5,6, 8) 
+```
+Divido en datos de entrenamiento y prueba.
+```{r}
+set.seed(1)
+trainIndex2 <- createDataPartition(df2$Y2, p = .75, 
+                                  list = FALSE)
+trainY2 <- df2[ trainIndex2,]
+testY2  <- df2[-trainIndex2,]
+```
+
+Para evitar el desbalance, hay dos opciones: "quitar" ejemplos de la clase 0 (no estar en NCG) para que haya una cantidad similar a la clase 1, o estimar nuevos ejemplos que se cataloguen como 1 para compensar.
+Esto último es lo que haremos, ya que de lo contrario estaríamos perdiendo mucha información.
+```{r}
+set.seed(9560)
+up_train <- upSample(x = trainY2[, -ncol(trainY2)],
+                     y = trainY2$Y2)                         
+table(up_train$Class) 
+hist(as.numeric(up_train$Class))
+head(up_train)
+```
+Con esto tenemos un conjunto de entrenamiento balanceado totalmente.
+Entrenamos los modelos y evaluamos.
+
+- Árbol de decisión
+```{r}
+arbol <- rpart(Class~., data = up_train, method = 'class')
+rpart.plot(arbol)
+```
+Evaluamos el modelo:
+```{r}
+pred_arbol <- predict(arbol, testY2, type = 'class')
+confusionMatrix(table(pred_arbol, testY2$Y2))
+```
+Esto con los ajustes por defecto, ahora optimizamos el parámetro CP y entrenamos con k-CV, k =10.
+```{r}
+control_class <- trainControl(
+  method = "cv",
+  number = 10
+)
+cps = seq(0 , 1, by=0.05)
+arbol2 <- train (Class ~ ., up_train,
+                 tuneGrid = expand.grid(cp = cps),
+                 method="rpart", 
+                 trControl=control_class)
+print(arbol2)
+```
+
+Se construye un árbol con estas características y finalmente evaluamos
+```{r}
+pred_arbol2 <- predict(arbol2, testY2)
+confusionMatrix(table(pred_arbol2, testY2$Y2))
+```
+
+PODA?
+```{r}
+set.seed(3)
+cv_arbol <- cv.tree(arbol_clasificacion, FUN = prune.misclass, K = 10)
+cv_arbol
+```
+
+- SVM.
+Entreno el modelo. 
+```{r}
+modelo_svm2 <- svm(formula = Class ~ ., data = up_train, kernel = "linear",
+                   scale = FALSE)
+```
+Predecimos y evaluamos.
+```{r}
+pred <- predict(modelo_svm2, testY2, type = 'class')
+confusionMatrix(table(pred, testY2$Y2))
+```
+Optimizamos los parámetros.
+```{r}
+costs = seq(1 , 100, by=10)
+svm <- train (Class ~ ., up_train,
+                 tuneGrid = expand.grid(cost = costs),
+                 method="svmLinear2", 
+                 trControl=control_class)
+print(svm)
+```
+Evalúo con el modelo óptimo.
+```{r}
+pred2 <- predict(svm, testY2)
+confusionMatrix(table(pred2, testY2$Y2))
+```
+ Se mejoran las predicciones.
+ 
+ 
+ - Xgboost.
+ Entreno el modelo.
+```{r}
+up_train2 <- up_train
+up_train2$Class <- as.integer(up_train2$Class)
+up_train2$Class [up_train2$Class == 1] <- 0
+up_train2$Class [up_train2$Class == 2] <- 1
+up_train2
+
+
+xgb_model <- xgboost(data =as.matrix(up_train), label = up_train$Class, nround = 2, objective = "binary:logistic")
+```

@@ -1,10 +1,10 @@
 ---
-title: "Descubrimiento de comunidades"
+title: "Descubrimiento de comunidades sin peso"
 output: html_notebook
 ---
 
 En el ámbito del analisis de redes biológicas, el descubrimiento de comunidades permite agrupar los nodos aludiendo a funcionalidad común o alto grado de relación.
-En este Notebook se realiza un proceso de descubrimiento de comunidades para la red de oncogenes objeto de estudio.
+En este Notebook se realiza un proceso de descubrimiento de comunidades para la red de oncogenes objeto de estudio, sin usar el peso de las aristas como elemento clave en el proceso.
 
 
 En primer lugar, se cargan las bibliotecas necesarias.
@@ -41,15 +41,16 @@ inicio<-sample(c(0:176), size = 177, replace = TRUE)
 
 Aplico el algoritmo y represento gráficamente el resultado. 
 ```{r}
-clp <- cluster_label_prop(grafo, initial = inicio, weights = E(grafo))
+clp <- cluster_label_prop(grafo, initial = inicio)
 plot(clp, grafo)
 ```
 Observamos propiedades de las comunidades descubiertas.
 
 Se estudian las comunidades y el número de nodos que tiene cada una:
-Aparecen 29 comunidades:
+Aparecen 20 comunidades:
 - 18 con un solo nodo
-- Comunidad 1: 159 nodos
+- Comunidad 1: 42 nodos
+- Comunidad 2: 117 nodos
 ```{r}
 table(clp$membership)
 ```
@@ -59,9 +60,12 @@ Se pueden ver los nodos de las comunidades más numerosas.
 ```{r}
 comunidad <- clp$membership
 miembros <- data.frame(nodos, comunidad)
+miembros[order(-comunidad),]
 
+c2 <- filter(miembros, comunidad == 2)
+c2$NODOS
 c1 <- filter(miembros, comunidad == 1)
-c1
+c1$NODOS
 ```
 
 Selecciono las comunidades con mayor numero de nodos (la 1 y la 2) y las estudio en relación a las medidas de centralidad calculadas anteriormente.
@@ -72,51 +76,58 @@ deg <- degree(grafo, mode = "all")
 degdf <- data.frame(nodos, deg)
 juntos <-merge(x=degdf, miembros, by= "NODOS")
 c1 <- filter(juntos, comunidad == 1)
+c2 <- filter(juntos, comunidad == 2)
 c1[order(-c1$deg),]
+c2[order(-c2$deg),]
 ```
 
 - Centrality (centralidad)
 ```{r}
-cent_eing <- centr_eigen(grafo, directed = F, normalized = F)
+cent_eing <- centr_eigen(grafo, directed = F, normalized = T)
 eigencen <- data.frame(nodos, cent_eing$vector)
 juntos <-merge(x=eigencen, miembros, by= "NODOS")
 c1 <- filter(juntos, comunidad == 1)
+c2 <- filter(juntos, comunidad == 2)
 c1[order(-c1$cent_eing.vector),]
+c2[order(-c2$cent_eing.vector),]
 ```
 
 - Clossenes (cercanía)
 ```{r}
-cent_clo <-centr_clo(grafo, mode = "all", normalized = F)
+cent_clo <-centr_clo(grafo, mode = "all", normalized = T)
 clossenes <- data.frame(nodos, cent_clo$res)
 juntos <-merge(x=clossenes, miembros, by= "NODOS")
 c1 <- filter(juntos, comunidad == 1)
+c2 <- filter(juntos, comunidad == 2)
 c1[order(-c1$cent_clo.res),]
+c2[order(-c2$cent_clo.res),]
 ```
 - Betweenness (intermediación)
 ```{r}
-bet <- betweenness(grafo, directed = F, weights = E(grafo))
+bet <- betweenness(grafo, directed = F)
 betdf <- data.frame(nodos, bet)
 juntos <-merge(x=betdf, miembros, by= "NODOS")
 c1 <- filter(juntos, comunidad == 1)
+c2 <- filter(juntos, comunidad == 2)
 c1[order(-c1$bet),]
+c2[order(-c2$bet),]
 ```
 Los resultados se dan ordenados en base a los valores de los nodos para cada una de las medidas, separándolos por comunidades.
 
 
 - Detección de comunidades basadas en optimización de modularidad.
 ```{r}
-cfg <- cluster_fast_greedy(grafo, weights = E(grafo))
+cfg <- cluster_fast_greedy(grafo)
 plot(cfg, grafo)
 ```
 Observamos propiedades de las comunidades descubiertas.
 
 Se estudian las comunidades y el número de nodos que tiene cada una.
-Aparecen 22 comunidades:
+Aparecen 20 comunidades:
 - 18 con un solo nodo
-- Comunidad 1: 17 nodos
-- Comunidad 2: 68 nodos
-- Comunidad 3: 62 nodos
-- Comunidad 4: 2 nodos
+- Comunidad 1: 87 nodos
+- Comunidad 2: 8 nodos
+- Comunidad 3: 64 nodos
 ```{r}
 table(cfg$membership)
 ```
@@ -126,15 +137,14 @@ Se imprimen aquellas con más de un nodo.
 ```{r}
 comunidad <- cfg$membership
 miembros <- data.frame(nodos, comunidad)
+miembros[order(-comunidad),]
 
-c4 <- filter(miembros, comunidad == 4)
-c4
 c3 <- filter(miembros, comunidad == 3)
-c3
+c3$NODOS
 c2 <- filter(miembros, comunidad == 2)
-c2
+c2$NODOS
 c1 <- filter(miembros, comunidad == 1)
-c1
+c1$NODOS
 
 ```
 
@@ -181,7 +191,7 @@ c3[order(-c3$cent_clo.res),]
 
 - Betweenness (intermediación)
 ```{r}
-bet <- betweenness(grafo, directed = F, weights = E(grafo))
+bet <- betweenness(grafo, directed = F)
 betdf <- data.frame(nodos, bet)
 juntos <-merge(x=betdf, miembros, by= "NODOS")
 c1 <- filter(juntos, comunidad == 1)
@@ -193,9 +203,3 @@ c3[order(-c3$bet),]
 ```
 Los resultados se dan ordenados en base a los valores de los nodos para cada una de las medidas, separándolos por comunidades.
 
-
-
-Guardo el listado de miembros de la comunidad en un archivo txt que será usado posteriormente.
-```{r}
-write.csv(miembros, file="comunidades.txt")
-```

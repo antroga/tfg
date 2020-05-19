@@ -17,80 +17,70 @@ library(caret)
 
 Cargo el dataframe
 ```{r}
-grafodf <- read.table("./dataframe.txt", header = TRUE, sep = ",")
-print(grafodf)
+grafodf <- read.table("./grafodf.txt", header = TRUE, sep = ",")
 ```
 Cambio los nombres de las columnas para facilitar la aplicación de los algoritmos.
 ```{r}
-colnames(grafodf) <- c("x", "NODOS", "X1","X2", "X3", "X4", "Y1", "Y2" )
-```
-Estandarizo los valores, ya que de lo contrario los predictores de mayor magnitud eclipsarían a los de menor magnitud.
-```{r}
-grafodf$X1 <- scale(grafodf$X1)
-grafodf$X2 <- scale(grafodf$X2)
-grafodf$X3 <- scale(grafodf$X3)
-grafodf$X4 <- scale(grafodf$X4)
-grafodf
-```
-
-Divido el conjunto de datos en test (75%) y train (25%).
-```{r}
-set.seed(101)  
-sample <- sample.int(n = nrow(grafodf), size = floor(.75*nrow(grafodf)), replace = F)
-train <- grafodf[sample, ]
-test  <- grafodf[-sample, ]
-```
-Creamos dos subconjuntos, uno para cada etiqueta.
-```{r}
-trainY1 <- train[, 2:7]
-testY1 <- test[, 2:7]
-df1 <- grafodf[, 2:7]
-trainY2 <- select(train, 3,4,5,6,8) 
-testY2 <- select(test, 3,4,5,6,8) 
-df2 <- select(grafodf, 3,4,5,6,8) 
+colnames(grafodf) <- c("ID","NODOS", "X1","X2", "X3", "X4", "Y1", "Y2" )
 ```
 Para aplicar el algoritmo, es necesario que las variables de respuesta sean factores.
 ```{r}
-train$Y1 <- as.factor(train$Y1)
-train$Y2 <- as.factor(train$Y2)
-test$Y1 <- as.factor(test$Y1)
-test$Y2 <- as.factor(test$Y2)
 grafodf$Y1 <- as.factor(grafodf$Y1)
 grafodf$Y2 <- as.factor(grafodf$Y2)
 ```
-Creo una función que servirá para evaluar las predicciones de cada etiqueta.
-```{r}
-evaluacion1 <- function(fit) {
-    pred1 <- predict(fit, testY1, type = 'class')
-    predicciones <- as.numeric(pred1 > 0.5)
-    table_mat <- table(testY1$Y1, predicciones)
-    accuracy_Test <- sum(diag(table_mat)) / sum(table_mat)
-    print(table_mat)
-    print(paste('Accuracy para Y1:', accuracy_Test))
-}
 
-evaluacion2 <- function(fit) {
-    pred2 <- predict(fit, testY2, type = 'class')
-    predicciones <- as.numeric(pred2 > 0.5)
-    table_mat <- table(testY2$Y2, predicciones)
-    accuracy_Test <- sum(diag(table_mat)) / sum(table_mat)
-    print(table_mat)
-    print(paste('Accuracy para Y2:', accuracy_Test))
-}
+Creo dos conjuntos, uno para cada etiqueta.
+```{r}
+df1 <- grafodf[, 3:7]
+df2 <- select(grafodf,3,4,5,6, 8) 
 ```
+- Y1.
+```{r}
+set.seed(3456)
+
+trainIndex1 <- createDataPartition(df1$Y1, p = .75, 
+                                  list = FALSE)
+trainY1 <- df1[ trainIndex1,]
+testY1  <- df1[-trainIndex1,]
+```
+Visualizamos los conjuntos.
+El conjunto de train está formado por 133 ejemplos y el de test, por 44.
+```{r}
+summary(trainY1)
+dim(trainY1)
+summary(testY1)
+dim(testY1)
+```
+- Y2.
+```{r}
+set.seed(1)
+trainIndex2 <- createDataPartition(df2$Y2, p = .75, 
+                                  list = FALSE)
+trainY2 <- df2[ trainIndex2,]
+testY2  <- df2[-trainIndex2,]
+```
+Visualizamos los conjuntos.
+El conjunto de train está formado por 133 ejemplos y el de test, por 44.
+```{r}
+summary(trainY2)
+dim(trainY2)
+summary(testY2)
+dim(testY2)
+```
+
 Construimos el modelo con los valores por defecto.
 El estblecimiento de una semilla asegura la reproducibilidad de los cálculos.
 ```{r}
 set.seed(10110)
 modelo_svm1 <- svm(formula = Y1 ~ ., data = trainY1, kernel = "linear",
-                  cost = 10, scale = FALSE)
+                   scale = FALSE)
 modelo_svm2 <- svm(formula = Y2 ~ ., data = trainY2, kernel = "linear",
-                  cost = 10, scale = FALSE)
+                  scale = FALSE)
 ```
 
 Vemos las características de los modelos generados. 
-Para la primera etiqueta, hay un total de 17 vectores.
-Para la segunda etiqueta, 62.
+Para la primera etiqueta, hay un total de 6 vectores.
+Para la segunda etiqueta, 47.
 ```{r}
 summary(modelo_svm1)
 summary(modelo_svm2)
@@ -101,101 +91,43 @@ modelo_svm1$index
 modelo_svm2$index
 ```
 
-Visualizamos los resultados para la predicción de la primera etiqueta (ser nodo aislado).
-Se muestra el porcentaje de error, la matriz de confusión y la medida de accuracy.
+- Y1 (ser nodo aislado).
+Visualizamos los resultados para la predicción de la primera etiqueta.
+Las métricas Accuracy y Kappa son 1. No hay errores.
 ```{r}
-evaluacion1(modelo_svm1)
+pred1 <- predict(modelo_svm1, testY1, type = 'class')
+confusionMatrix(table(pred1, testY1$Y1))
 ```
 
-Visualizamos los resultados para la predicción de la segunda etiqueta (estar en la lista NCG). Se muestra el porcentaje de error, la matriz de confusión y la medida de accuracy.
+- Y2 (estar en la lista NCG)
+Visualizamos los resultados para la predicción de la segunda etiqueta.
+La métrica Accuracy es o.8864. La métrica Kappa es 0, es decir, no mejoramos al modelo que lo clasifica todo como la clase dominante. 
 ```{r}
-evaluacion2(modelo_svm2)
+pred2 <- predict(modelo_svm2, testY2, type = 'class')
+confusionMatrix(table(pred2, testY2$Y2))
 ```
-El paquete que nos permite utilizar el modelo SVM trae una función llamada tune. 
-La función tune permite optimizar los hiperparámetros del modelo SVM (cost).
-La elección del mejor hiperparámetro permitirá conseguir el mejor modelo SVM posible.
+Estos resultados han sido obtenidos tras un único proceso de entrenamiento y prueba, y usando los valores por defecto.
+A continuación se llevará a cabo una optimización del algoritmo, probando distintos valores del parámetro cost y evaluando con kCV, validación cruzada con k = 10.
+Como las predicciones de la etiqueta Y1 no pueden mejorar, no se tendrán en cuenta a partir de aquí.
+```{r}
+control_class <- trainControl(
+  method = "cv",
+  number = 10
+)
+```
 
-Para la etiqueta 1:
-El mejor desempeño se obtiene con cost = 1.
+Para la etiqueta Y2 (estar en NCG):
 ```{r}
-svm_cv1 <- tune("svm", Y1 ~ ., data = df1,
-               kernel = 'linear',
-               ranges = list(cost = c(0.001, 0.01, 0.1, 1, 5, 10, 20, 50, 100,
-                                      150, 200)))
-
-summary(svm_cv1)
+costs = seq(1 , 100, by=10)
+svm2<- train (Y2 ~ ., trainY2,
+                 tuneGrid = expand.grid(cost = costs),
+                 method="svmLinear2", 
+                 trControl=control_class)
+print(svm2)
 ```
-Para la etiqueta 2:
-El mejor desempeño se obtiene con cost = 20.
+Evalúo con el modelo óptimo.
 ```{r}
-svm_cv2 <- tune("svm", Y2 ~ ., data = df2,
-               kernel = 'linear',
-               ranges = list(cost = c(0.001, 0.01, 0.1, 1, 5, 10, 20, 50, 100,
-                                      150, 200)))
-
-summary(svm_cv2)
+pred2 <- predict(svm2, testY2)
+confusionMatrix(table(pred2, testY2$Y2))
 ```
-No tiene sentido la clasificación.
-Tenemos muy pocos datos para usar este tratamiento.
- 
-
-Aplicamos k-CV, con k = 5.
-```{r}
-folds1 <- createFolds(trainY1$Y1, k = 5)
-folds2 <- createFolds(trainY2$Y2, k = 5)
-```
-Entreno el modelo y evalúo los resultados.
-- Etiqueta Y1:
-```{r}
-cvKernelSVM <- lapply(folds1, function(x){
-  training_fold <- trainY1[-x, ]
-  test_fold <- trainY1[x, ]
-  accuracy = c()
-  clasificador <- svm(Y1 ~ .,
-                      data = training_fold, 
-                      cost= 1,
-                      kernel = 'linear')
-  pred <- predict(clasificador, newdata = test_fold, method = 'class')
-  y_pred <- as.numeric(pred > 0.5)
-  cm <- table(test_fold$Y1, y_pred)
-  precision <- sum(diag(cm)) / sum(cm)
-  print(cm)
-  print(paste('Accuracy for test Y1:', precision))
-})
-
-```
-- Etiqueta Y2:
-```{r}
-cvKernelSVM <- lapply(folds2, function(x){
-  training_fold <- trainY2[-x, ]
-  test_fold <- trainY2[x, ]
-  accuracy = c()
-  clasificador <- svm(Y2 ~ .,
-                      data = training_fold, 
-                      cost= 20,
-                      kernel = 'linear')
-  pred <- predict(clasificador, test_fold, method = 'class')
-  pred_test <- predict(clasificador, testY2, method = 'class')
-  pt <- as.numeric(pred_test>0.5)
-  y_pred <- as.numeric(pred > 0.5)
-  cm <- table(test_fold$Y2, y_pred)
-  precision <- sum(diag(cm)) / sum(cm)
-  print(cm)
-  print(paste('Accuracy for test Y2:', precision))
-  cm2 <- table(testY2$Y2, pt)
-  print(cm2)
-  precision2 <- sum(diag(cm)) / sum(cm)
-  accuracy <- precision2
-  print(paste('Accuracy para test de Y2:', precision2))
-  print('***********************')
-})
-```
-Evaluamos los resultados. 
-La media de precisión es 0.85.
-El mejor dato consigue una precisión de 0.92.
-```{r}
-l <- cvDecisionTree2
-lista <- c(l$Fold1, l$Fold2, l$Fold3, l$Fold4, l$Fold5)
-print(paste('Media de accuracy para Y2 con CV:', mean(lista)))
-print(paste('Accuracy máximo para Y2 con CV:', max(lista)))
-```
+El modelo no mejora, sigue clasificando todos los ejemplos en la clase dominante. Esto se debe a que las clases están muy desbalanceadas.
