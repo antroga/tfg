@@ -5,11 +5,11 @@ output: html_notebook
 
 En las experimentaciones anteriores se han utilizado tres algoritmos distintos para aprendizaje supervisado (árbol de decisión, Xgboost y SVM). 
 El hecho de que las clases de clasificación estén muy desbalanceadas hace que los modelos generados no clasifiquen como se espera.
-Además, se ha comprobado experimentalmente que la clase Y1 (ser nodo aislado) no es una buena categoría para clasificar los ejemplos.
 
-Así, en este notebook se trabaja con los predictores y la clase restante, Y2 (estar en NCG), intentando solventar el problema del desbalance.
 
-En primer lugar se instalan los paquetes y se cargan las librerías necesarias.
+Así, en este notebook se trabaja con los predictores y la clases Y1(ser nodo aislado) e Y2 (estar en NCG), intentando solventar el problema del desbalance.
+
+En primer lugar se cargan las librerías necesarias.
 ```{r}
 library(dplyr)
 library(igraph)
@@ -31,20 +31,28 @@ colnames(grafodf) <- c("ID","NODOS", "X1","X2", "X3", "X4", "Y1", "Y2" )
 ```
 Como puede verse en el histograma, las clases de clasificación están muy desbalanceadas.
 ```{r}
+hist(grafodf$Y1)
 hist(grafodf$Y2)
 ```
 Para aplicar el algoritmo, es necesario que las variables de respuesta sean factores.
 ```{r}
+grafodf$Y1 <- as.factor(grafodf$Y1)
 grafodf$Y2 <- as.factor(grafodf$Y2)
 ```
 
 Me quedo con los predictores y la etiqueta Y2.
 ```{r}
+df1 <- grafodf[, 3:7]
 df2 <- select(grafodf,3,4,5,6, 8) 
 ```
 Divido en datos de entrenamiento y prueba.
 ```{r}
 set.seed(1)
+trainIndex1 <- createDataPartition(df1$Y1, p = .75, 
+                                  list = FALSE)
+trainY1 <- df1[ trainIndex1,]
+testY1  <- df1[-trainIndex1,]
+
 trainIndex2 <- createDataPartition(df2$Y2, p = .75, 
                                   list = FALSE)
 trainY2 <- df2[ trainIndex2,]
@@ -55,23 +63,42 @@ Para evitar el desbalance, hay dos opciones: "quitar" ejemplos de la clase 0 (no
 Esto último es lo que haremos, ya que de lo contrario estaríamos perdiendo mucha información.
 ```{r}
 set.seed(9560)
-up_train <- upSample(x = trainY2[, -ncol(trainY2)],
+up_train1 <- upSample(x = trainY1[, -ncol(trainY1)],
+                     y = trainY1$Y1)                         
+table(up_train1$Class) 
+head(up_train1)
+
+up_train2 <- upSample(x = trainY2[, -ncol(trainY2)],
                      y = trainY2$Y2)                         
-table(up_train$Class) 
-hist(as.numeric(up_train$Class))
-head(up_train)
+table(up_train2$Class) 
+head(up_train2)
 ```
+Representamos gráficamente los histogramas para ver la distribución de las clases.
+```{r}
+hist(as.numeric(up_train1$Class))
+hist(as.numeric(up_train2$Class))
+```
+
 Con esto tenemos un conjunto de entrenamiento balanceado totalmente.
 Entrenamos los modelos y evaluamos.
 
 - Árbol de decisión
 ```{r}
-arbol <- rpart(Class~., data = up_train, method = 'class')
-rpart.plot(arbol)
+arbol1 <- rpart(Class~., data = up_train1, method = 'class')
+rpart.plot(arbol1)
+
+arbol2 <- rpart(Class~., data = up_train2, method = 'class')
+rpart.plot(arbol2)
 ```
-Evaluamos el modelo:
+Evaluamos los modelos:
+- Etiqueta Y1.
 ```{r}
-pred_arbol <- predict(arbol, testY2, type = 'class')
+pred_arbol <- predict(arbol1, testY1, type = 'class')
+confusionMatrix(table(pred_arbol, testY1$Y1))
+```
+- Etiqueta Y2.
+```{r}
+pred_arbol <- predict(arbol2, testY2, type = 'class')
 confusionMatrix(table(pred_arbol, testY2$Y2))
 ```
 Esto con los ajustes por defecto, ahora optimizamos el parámetro CP y entrenamos con k-CV, k =10.
@@ -80,34 +107,48 @@ control_class <- trainControl(
   method = "cv",
   number = 10
 )
+
 cps = seq(0 , 1, by=0.05)
-arbol2 <- train (Class ~ ., up_train,
+arbol11 <- train (Class ~ ., up_train1,
                  tuneGrid = expand.grid(cp = cps),
                  method="rpart", 
                  trControl=control_class)
-print(arbol2)
+print(arbol11)
+
+arbol22 <- train (Class ~ ., up_train2,
+                 tuneGrid = expand.grid(cp = cps),
+                 method="rpart", 
+                 trControl=control_class)
+print(arbol22)
 ```
 
-Se construye un árbol con estas características y finalmente evaluamos
+Predecimos y evaluamos.
+- Etiqueta Y1.
 ```{r}
-pred_arbol2 <- predict(arbol2, testY2)
+pred_arbol1 <- predict(arbol11, testY1)
+confusionMatrix(table(pred_arbol1, testY1$Y1))
+```
+- Etiqueta Y2.
+```{r}
+pred_arbol2 <- predict(arbol22, testY2)
 confusionMatrix(table(pred_arbol2, testY2$Y2))
 ```
 
-PODA?
-```{r}
-set.seed(3)
-cv_arbol <- cv.tree(arbol_clasificacion, FUN = prune.misclass, K = 10)
-cv_arbol
-```
-
 - SVM.
-Entreno el modelo. 
+Entreno los modelos. 
 ```{r}
-modelo_svm2 <- svm(formula = Class ~ ., data = up_train, kernel = "linear",
+modelo_svm1 <- svm(formula = Class ~ ., data = up_train1, kernel = "linear",
+                   scale = FALSE)
+modelo_svm2 <- svm(formula = Class ~ ., data = up_train2, kernel = "linear",
                    scale = FALSE)
 ```
 Predecimos y evaluamos.
+- Etiqueta Y1.
+```{r}
+pred <- predict(modelo_svm1, testY1, type = 'class')
+confusionMatrix(table(pred, testY1$Y1))
+```
+- Etiqueta Y2.
 ```{r}
 pred <- predict(modelo_svm2, testY2, type = 'class')
 confusionMatrix(table(pred, testY2$Y2))
@@ -115,29 +156,31 @@ confusionMatrix(table(pred, testY2$Y2))
 Optimizamos los parámetros.
 ```{r}
 costs = seq(1 , 100, by=10)
-svm <- train (Class ~ ., up_train,
+svm1 <- train (Class ~ ., up_train1,
                  tuneGrid = expand.grid(cost = costs),
                  method="svmLinear2", 
                  trControl=control_class)
-print(svm)
+print(svm1)
+
+svm2 <- train (Class ~ ., up_train2,
+                 tuneGrid = expand.grid(cost = costs),
+                 method="svmLinear2", 
+                 trControl=control_class)
+print(svm2)
 ```
 Evalúo con el modelo óptimo.
+- Etiqueta Y1.
 ```{r}
-pred2 <- predict(svm, testY2)
+pred1 <- predict(svm1, testY1)
+confusionMatrix(table(pred1, testY1$Y1))
+```
+- Etiqueta Y2.
+```{r}
+pred2 <- predict(svm2, testY2)
 confusionMatrix(table(pred2, testY2$Y2))
 ```
- Se mejoran las predicciones.
+ Se mejoran las predicciones con la optimización.
  
- 
- - Xgboost.
- Entreno el modelo.
-```{r}
-up_train2 <- up_train
-up_train2$Class <- as.integer(up_train2$Class)
-up_train2$Class [up_train2$Class == 1] <- 0
-up_train2$Class [up_train2$Class == 2] <- 1
-up_train2
 
+En general, el desempeño de los modelos ha mejorado al estar la clase de entrenamiento balanceada. 
 
-xgb_model <- xgboost(data =as.matrix(up_train), label = up_train$Class, nround = 2, objective = "binary:logistic")
-```

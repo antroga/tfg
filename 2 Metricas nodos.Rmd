@@ -28,8 +28,8 @@ grafo <- delete_edges(grafo_origen, E(grafo_origen)[PESO<0.4])
 ```
 
 En primer lugar, calculo medidas relativas al grafo en su conjunto:
-- Densidad
-- Diámetro
+- Densidad (aristas existentes en relación al máximo número de aristas posibles): o.19305
+- Diámetro: 5
 ```{r}
 #Densidad
 edge_density(grafo, loops=F)

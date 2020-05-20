@@ -44,9 +44,9 @@ bet <- betweenness(grafo, directed = F, weights = E(grafo))
 
 Este dataset será usado para aprendizaje supervisado.
 Por ello, debe contener un campo que funcione como etiqueta cuyo valor intentaremos predecir.
-Este campo podrá ser:
+Habrá dos campos etiqueta, uno basado en la información obtenida en el descubrimiento de comunidades ("ser nodo aislado") y otro en conocimiento experto, "ser oncogen de la lista de NCG".
 
-- Ser o no nodo aislado, en referencia a los datos obtenidos con el descubrimiento de comunidades.
+- Ser (1) o no (0) nodo aislado, en referencia a los datos obtenidos con el descubrimiento de comunidades.
 
 Para ello, primero leo el listado de nodos con las comunidades a las que pertenecen.
 ```{r}
@@ -65,7 +65,7 @@ for(i in indices){
 }
 ```
 
-- Información de conocimiento experto --> red de NCG:
+- Ser (1) o no (0) oncogen de la red de NCG, en base a conocimiento experto
 
 Para ello, cargamos el listado de genes
 ```{r}

@@ -113,7 +113,7 @@ printcp(fit2)
 Predecimos y evaluamos el desempeño de los modelos.
 
 - Etiqueta Y1 (ser nodo aislado):
-La precisión es 1. Todos los ejemplos se clasifican correctamente, no hay error.
+La precisión es casi 1. 
 ```{r}
 pred1 <- predict(fit1, testY1, type = 'class')
 confusionMatrix(table(pred1, testY1$Y1))
@@ -138,11 +138,26 @@ control_class <- trainControl(
 ```
 También optimizamos los hiperparámetros del Árbol de decisión, probando distintos valores y evaluándolos con validación cruzada. 
 
+- Etiqueta Y1 (ser nodo aislado):
+Se prueban 10 valores distintos del parámetro principal, cp.
+```{r}
+cps = seq(0 , 1, by=0.05)
+arbol1 <- train (Y1 ~ ., trainY1,
+                 tuneGrid = expand.grid(cp = cps),
+                 method="rpart", 
+                 trControl=control_class)
+print(arbol1)
+```
+El mejor modelo de los entrenados es aquel con cp= 0.9, que consigue un accuracy de 0.992307.
 
-El modelo que predice sobre la clase Y1 no puede mejorar puesto que la precisión es 1.
-Estos datos, además de la estructura del árbol construido, nos llevan a pensar que la clase en la que se basa la clasificación no es buena. Por ello, no seguiremos haciendo mejoras para los datos con Y1.
+Predecimos usando el modelo óptimo:
+```{r}
+pred1 <- predict(arbol1, testY1)
+confusionMatrix(table(pred1, testY1$Y1))
+```
+La optimización parece mejorar el modelo.
 
-Para la etiqueta Y2 (estar en NCG):
+- Etiqueta Y2 (estar en NCG):
 Se prueban 10 valores distintos del parámetro principal, cp.
 ```{r}
 cps = seq(0 , 1, by=0.05)

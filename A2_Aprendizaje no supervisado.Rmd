@@ -1,10 +1,10 @@
 ---
-title: "Aprendizaje no supervisado sobre la matriz de distancias"
+title: "ANEXO 2. Aprendizaje no supervisado sobre la matriz"
 output: html_notebook
 ---
 
 En este notebook se lleva a cabo un análisis no supervisado para dividir en clústeres o subgrafos la red de oncogenes que estamos estudiando.
-La idea es comparar los datos obtenidos con el aprendizaje no supervisado y el descubrimiento de comunidades.
+El clustering se hace sobre la matriz de adyacencia del grafo. 
 Se hace uso de dos tipos de clustering: jerárquico y con kmeans.
 
 En primer lugar, cargamos las librerías necesarias.
@@ -112,16 +112,4 @@ c1 <- filter(hjclust, hjclust$grupos1 == 1)
 c1
 c2 <- filter(hjclust, hjclust$grupos1 == 2)
 c2
-```
-
-COMPARACIÓN DE CLÚSTERES Y COMUNIDADES.
-
-Represento gráficamente las comunidades del descubrimiento de comunidades usando una forma similar para poder comparar con estos resultados.
-```{r}
-set.seed(55)
-inicio<-sample(c(0:176), size = 177, replace = TRUE)
-clp <- cluster_label_prop(grafo, initial = inicio)
-plot(matgraf, col= clp$membership, main="Propagación de etiquetas, k=2")
-cfg <- cluster_fast_greedy(grafo)
-plot(matgraf, col= cfg$membership, main="Optimización de la modularidad, k=3")
 ```

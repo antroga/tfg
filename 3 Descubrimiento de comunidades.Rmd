@@ -47,7 +47,7 @@ plot(clp, grafo)
 Observamos propiedades de las comunidades descubiertas.
 
 Se estudian las comunidades y el número de nodos que tiene cada una:
-Aparecen 29 comunidades:
+Aparecen 19 comunidades:
 - 18 con un solo nodo
 - Comunidad 1: 159 nodos
 ```{r}
@@ -64,7 +64,7 @@ c1 <- filter(miembros, comunidad == 1)
 c1
 ```
 
-Selecciono las comunidades con mayor numero de nodos (la 1 y la 2) y las estudio en relación a las medidas de centralidad calculadas anteriormente.
+Selecciono la comunidad con mayor numero de nodos (la 1) y la estudio en relación a las medidas de centralidad calculadas anteriormente.
 
 - Degree (grado)
 ```{r}
@@ -115,7 +115,7 @@ Aparecen 22 comunidades:
 - 18 con un solo nodo
 - Comunidad 1: 17 nodos
 - Comunidad 2: 68 nodos
-- Comunidad 3: 62 nodos
+- Comunidad 3: 72 nodos
 - Comunidad 4: 2 nodos
 ```{r}
 table(cfg$membership)

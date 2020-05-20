@@ -35,17 +35,6 @@ head(grafo)
 plot(grafo)
 ```
 
-Vemos algunos datos característicos del grafo como:
-- Histograma que representa los pesos de las aristas
-  Puede apreciarse que la mayoría de las aristas tienen un peso dentro del rango (0, 0.4)
-- Media del peso de las aristas: 0.2444883
-- Desvación típica: 0.1691008
-```{r}
-hist(aristas$PESO)
-mean(aristas$PESO)
-sd(aristas$PESO)
-```
-
 Probamos varias representaciones gráficas del grafo para intentar verlo con más claridad:
 
 - Círculo
@@ -67,8 +56,8 @@ plot(grafo, layout=fr)
 Las visualización del grafo es poco clara debido a la gran cantidad de aristas.
 
 A continuación, lo representamos como mapa de calor a partir de la matriz de adyacencia.
+El color más oscuro denota una relación más fuerte (peso de las aritas mayor) entre cada par de nodos.
 ```{r}
-#matriz
 netm <- get.adjacency(grafo, attr="PESO", sparse=F)
 colnames(netm) <- nodos$NODOS
 rownames(netm) <- nodos$NODOS
@@ -79,13 +68,21 @@ heatmap(netm[,177:1], Rowv = NA, Colv = NA, col = palf(100),
 
 ```
 
-Tras esta primera observacion del grafo, pensamos que su gran tamaño puede dificultar las tareas de clustering y aprendizaje supervisado, por lo que resolvemos podar el grafo a fin de facilitar estas operaciones.
-
-Primero, para entender mejor la red, representamos las aristas en función de su peso. Comprobamos que la mayoría tienen un peso inferior a 0.5.
+Para entender mejor la red, representamos las aristas en función de su peso. Comprobamos que la mayoría tienen un peso inferior a 0.5.
 La frecuencia de las aristas es mayor con valores de peso pequeños, y va disminuyendo a medida que aumenta el valor del peso. 
 ```{r}
 hist(aristas$PESO, xlab = "Peso", ylab = "Frecuencia")
 ```
+Se calculan también:
+- Media del peso de las aristas: 0.2444883
+- Desvación típica: 0.1691008
+```{r}
+mean(aristas$PESO)
+sd(aristas$PESO)
+```
+
+Tras esta primera observacion del grafo, pensamos que su gran tamaño puede dificultar las tareas de clustering y aprendizaje supervisado, por lo que resolvemos podar el grafo a fin de facilitar estas operaciones.
+
 Como paso previo a la poda, representamos el número de aristas en función de la densidad de estas y del número de subredes encontradas. 
 La poda se realiza en función del peso de las aristas. Así, el umbral de poda está comprendido entre 0 y 1, incrementándose en 0.05 tras cada iteración. 
 ```{r}

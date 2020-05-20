@@ -76,14 +76,13 @@ heatmap(x = cormatrix, col = col, symm = TRUE)
 De aquí podemos concluir que existe una mayor relación entre las medidas de "centrality" y "degree" y la menor correlación se da entre "degree" y "betweenness". 
 
 
-Este dataset será usado para aprendizaje supervisado.
-Por ello, debe contener un campo que funcione como etiqueta cuyo valor intentaremos predecir.
+Este dataset será usado para aprendizaje supervisado.Por ello, contiene un campo que funciona como etiqueta, cuyo valor intentaremos predecir.
 Ahora estudiamos la distribución de las etiquetas dentro del conjunto de datos.
 ```{r}
 hist(grafodf$Nodo.aislado)
 hist(grafodf$Estar.NCG)
 ```
-En ambos casos, la mayoría de ejemplos se clasifican dentro de la clase 0, es decir, no poseen las características a las que aluden las etiquetas ("ser nodo aislado", "estar en TCGA").
+En ambos casos, la mayoría de ejemplos se clasifican dentro de la clase 0, es decir, no poseen las características a las que aluden las etiquetas ("ser nodo aislado", "estar en NCG").
 Los datos por tanto no se encuentran balanceados entre las dos categorías de clasificación (1 y 2).
 
 Representamos gráficamente el dataframe completo.

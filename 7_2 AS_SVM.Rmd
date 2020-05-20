@@ -22,6 +22,7 @@ grafodf <- read.table("./grafodf.txt", header = TRUE, sep = ",")
 Cambio los nombres de las columnas para facilitar la aplicación de los algoritmos.
 ```{r}
 colnames(grafodf) <- c("ID","NODOS", "X1","X2", "X3", "X4", "Y1", "Y2" )
+grafodf
 ```
 Para aplicar el algoritmo, es necesario que las variables de respuesta sean factores.
 ```{r}
@@ -34,6 +35,8 @@ Creo dos conjuntos, uno para cada etiqueta.
 df1 <- grafodf[, 3:7]
 df2 <- select(grafodf,3,4,5,6, 8) 
 ```
+Divido los datos en conjuntos de entrenamiento y prueba.
+
 - Y1.
 ```{r}
 set.seed(3456)
@@ -79,17 +82,17 @@ modelo_svm2 <- svm(formula = Y2 ~ ., data = trainY2, kernel = "linear",
 ```
 
 Vemos las características de los modelos generados. 
-Para la primera etiqueta, hay un total de 6 vectores.
-Para la segunda etiqueta, 47.
 ```{r}
 summary(modelo_svm1)
 summary(modelo_svm2)
 ```
-Índice de las observaciones que actúan como vector soporte
+Índice de las observaciones que actúan como vector soporte.
 ```{r}
 modelo_svm1$index
 modelo_svm2$index
 ```
+
+Predecimos con los modelos generados y evaluamos.
 
 - Y1 (ser nodo aislado).
 Visualizamos los resultados para la predicción de la primera etiqueta.
@@ -108,15 +111,30 @@ confusionMatrix(table(pred2, testY2$Y2))
 ```
 Estos resultados han sido obtenidos tras un único proceso de entrenamiento y prueba, y usando los valores por defecto.
 A continuación se llevará a cabo una optimización del algoritmo, probando distintos valores del parámetro cost y evaluando con kCV, validación cruzada con k = 10.
-Como las predicciones de la etiqueta Y1 no pueden mejorar, no se tendrán en cuenta a partir de aquí.
+
 ```{r}
 control_class <- trainControl(
   method = "cv",
   number = 10
 )
 ```
+- Etiqueta Y1 (ser nodo aislado):
+```{r}
+costs = seq(1 , 100, by=10)
+svm1<- train (Y1 ~ ., trainY1,
+                 tuneGrid = expand.grid(cost = costs),
+                 method="svmLinear2", 
+                 trControl=control_class)
+print(svm1)
+```
+Evalúo con el modelo óptimo.
+```{r}
+pred1 <- predict(svm1, testY1)
+confusionMatrix(table(pred1, testY1$Y1))
+```
+El modelo no mejora.
 
-Para la etiqueta Y2 (estar en NCG):
+- Etiqueta Y2 (estar en NCG):
 ```{r}
 costs = seq(1 , 100, by=10)
 svm2<- train (Y2 ~ ., trainY2,

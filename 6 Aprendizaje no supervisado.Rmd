@@ -5,6 +5,7 @@ output: html_notebook
 
 En este notebook se lleva a cabo un análisis no supervisado para dividir en clústeres o subgrafos la red de oncogenes que estamos estudiando.
 La idea es comparar los datos obtenidos con el aprendizaje no supervisado y el descubrimiento de comunidades.
+El estudio no supervisado se aplica sobre el dataset generado anteriormente, sin tener en cuenta los campos que funcionan como etiquetas. 
 Se hace uso de dos tipos de clustering: jerárquico y con kmeans.
 
 
@@ -103,4 +104,30 @@ c3 <- filter(hjclust, hjclust$grupos1 == 3)
 c3
 c4 <- filter(hjclust, hjclust$grupos1 == 4)
 c4
+```
+COMPARACIÓN DE CLÚSTERES Y COMUNIDADES.
+
+Represento gráficamente las comunidades del descubrimiento de comunidades usando una forma similar para poder comparar con estos resultados.
+Primero se carga el grafo.
+```{r}
+#Cargo datos
+aristas <- read_excel("./Dataset1.xlsx", 
+                    sheet = "WeigthedNetwork")
+nodos <- read_excel("./Dataset1.xlsx", 
+                    sheet = "NetworkNodes")
+#Construyo el grafo
+grafo_origen <- 
+  graph_from_data_frame(d = aristas, vertices = nodos,  directed=F)
+
+#Podo cogiendo como umbral 0.4
+grafo <- delete_edges(grafo_origen, E(grafo_origen)[PESO<0.4])
+```
+Se muestran las gráficas.
+```{r}
+set.seed(55)
+inicio<-sample(c(0:176), size = 177, replace = TRUE)
+clp <- cluster_label_prop(grafo, initial = inicio, weights = E(grafo))
+plot(grafodf, col= clp$membership, main="Propagación de etiquetas, k=1")
+cfg <- cluster_fast_greedy(grafo, weights = E(grafo))
+plot(grafodf, col= cfg$membership, main="Optimización de la modularidad, k=4")
 ```

@@ -92,35 +92,8 @@ pred2 <- predict(modelo2, newdata =as.matrix(testY2))
 predicciones <- as.numeric(pred2 > 0.5)
 confusionMatrix(table(predicciones, testY2$Y2))
 ```
-Los modelos tienen un desempeño perfecto. Puede deberse a un sobre ajuste de los mismos.
+Los modelos tienen un desempeño perfecto, aunque puede deberse a un sobre ajuste de los mismos.
 
 
-QUIZÁ QUITO DE AQUÍ PABAJO
-A continuación los entrenaremos cambiando los parámetros por defecto con kCV, validación cruzada con k = 10.
-```{r}
-control_class <- trainControl(
-  method = "cv",
-  number = 10)
-```
-Para el algoritmo XgbTree se pueden optimizar:
-nrounds, max_depth, eta, gamma, colsample_bytree, min_child_weight, subsample
 
-- Etiqueta Y1 (ser nodo aislado)
-```{r}
-trainY1$Y1 <- as.numeric(trainY1$Y1)
-modelo1 <- train(Y1 ~ . , trainY1,
-                 tuneGrid = expand.grid(
-                     nrounds = c(3,5,7),
-                     max_depth = c(3, 5,7), 
-                     eta= c(2,4,6),
-                     gamma = c(0.5, 1),
-                     colsample_bytree = c(1,2),
-                     min_child_weight = c(5,10),
-                     subsample = 1
-                 ),
-                 method = "xgbTree",
-                 trControl=control_class)
-
-print(model_clas_xgbTree)
-```
 
