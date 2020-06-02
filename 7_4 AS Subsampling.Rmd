@@ -180,6 +180,7 @@ pred2 <- predict(svm2, testY2)
 confusionMatrix(table(pred2, testY2$Y2))
 ```
  Se mejoran las predicciones con la optimización.
+
  
 
 En general, el desempeño de los modelos ha mejorado al estar la clase de entrenamiento balanceada. 

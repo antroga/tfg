@@ -94,6 +94,56 @@ confusionMatrix(table(predicciones, testY2$Y2))
 ```
 Los modelos tienen un desempeño perfecto, aunque puede deberse a un sobre ajuste de los mismos.
 
+Ahora se hace uso de validación cruzada, con la que se entrena y prueba varias veces el modelo, obteniéndose múltiples estimaciones de error. Si las estimaciones son similares, el modelo será bueno.
+Se utiliza K-CV, con k =10.
+```{r}
+control_class <- trainControl(
+  method = "cv",
+  number = 10
+)
+```
+También optimizamos los hiperparámetros del modelo, probando distintos valores y evaluándolos con validación cruzada. 
+- Etiqueta Y1 (ser nodo aislado):
+Se prueban 10 valores distintos del parámetro principal, cp.
+```{r}
+xgb_grid <- expand.grid(
+  nrounds = c(1,2),
+  eta = c(0.1,0.3, 0.5),
+  max_depth = c(2,3),
+  gamma = c(0,1),
+  colsample_bytree= c(1,2), 
+  min_child_weight=c(1,2),
+  subsample=c(1,2)
+)
+modelo1 <- train (Y1 ~ ., trainY1,
+                 tuneGrid = xgb_grid,
+                 method="xgbTree", 
+                 trControl=control_class)
 
+print(modelo1)
+```
+Predecimos usando el modelo óptimo:
+```{r}
+pred1 <- predict(modelo1, testY1)
+predicciones <- as.numeric(pred1 > 0.5)
+confusionMatrix(table(predicciones, testY1$Y1))
+```
+La optimización parece mejorar el modelo.
 
-
+- Etiqueta Y2 (estar en NCG):
+```{r}
+modelo2 <- train (Y2 ~ ., trainY2,
+                 tuneGrid = xgb_grid,
+                 method="xgbTree", 
+                 trControl=control_class)
+print(modelo2)
+```
+Predecimos usando el modelo óptimo:
+Clasifica todo como la clase mayoritaria (0).
+```{r}
+pred2 <- predict(modelo2, testY2)
+predicciones <- as.numeric(pred2 > 0.5)
+predicciones
+confusionMatrix(table(predicciones, testY2$Y2))
+```
+El modelo, que ya ofrecía unos resultados perfectos, no mejora al optimizar los hiperparámetros.

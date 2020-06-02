@@ -8,4 +8,4 @@ Autora: Ángela del Robledo Troncoso García
 En este conjunto de archivos se encuentran:
 - Notebooks de RStudio, numerados en el orden en el que se han realizado los pasos.
 - Archivos de texto y Excel que sirven como datos de entrada en los Notebooks.
-- Archivos html, uno por cada Notebooks y generados a partir de éstos. Misma nomenclatura. 
+- Archivos html, uno por cada Notebook y generados a partir de éstos. Misma nomenclatura. 
